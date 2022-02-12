@@ -1,9 +1,9 @@
 import React from 'react';
-import {SafeAreaView, StatusBar, useColorScheme} from 'react-native';
 
 import Board from './components/Board';
+import {SafeAreaView, StatusBar, useColorScheme} from 'react-native';
 
-const App = () => {
+export default function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
   const backgroundStyle = {
@@ -17,6 +17,4 @@ const App = () => {
       <Board />
     </SafeAreaView>
   );
-};
-
-export default App;
+}

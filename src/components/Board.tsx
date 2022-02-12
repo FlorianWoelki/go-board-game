@@ -1,8 +1,8 @@
 import React from 'react';
-import {useEffect, useState} from 'react';
-import {Dimensions, StyleSheet, View, ViewStyle} from 'react-native';
+import { useEffect, useState } from 'react';
+import { Dimensions, StyleSheet, View, ViewStyle } from 'react-native';
 
-const Board: React.FC = (): JSX.Element => {
+export const Board: React.FC = (): JSX.Element => {
   const hoshiOffset = 2; // offset for 9x9 board
   const margin = 18;
   const [stoneWidth, setStoneWidth] = useState<number>(0);
@@ -53,19 +53,19 @@ const Board: React.FC = (): JSX.Element => {
             margin + (boardSize - hoshiOffset - 1) * (stoneWidth + 1) - 2;
         }
 
-        const hoshiPoint = {style: {...styles.hoshi, ...hoshiStyle}};
+        const hoshiPoint = { style: { ...styles.hoshi, ...hoshiStyle } };
         setHoshiPoints(oldHoshiPoints => [...oldHoshiPoints, hoshiPoint]);
       }
     }
 
     for (let y = 0; y < boardSize; y++) {
       const horizontalLine = {
-        style: {...styles.lineHorizontal, marginBottom: stoneWidth},
+        style: { ...styles.lineHorizontal, marginBottom: stoneWidth },
       };
       setHorizontalLines(old => [...old, horizontalLine]);
 
       const verticalLine = {
-        style: {...styles.lineVertical, marginRight: stoneWidth},
+        style: { ...styles.lineVertical, marginRight: stoneWidth },
       };
       setVerticalLines(old => [...old, verticalLine]);
 
@@ -77,7 +77,8 @@ const Board: React.FC = (): JSX.Element => {
               top: y * (stoneWidth + 1),
             }}
             data-position-x={x}
-            data-position-y={y}></View>
+            data-position-y={y}
+          ></View>
         );
 
         if (!grid[y]) {
@@ -95,13 +96,15 @@ const Board: React.FC = (): JSX.Element => {
         ...styles.board,
         width: stoneWidth * (boardSize - 1) + boardSize * 1 + margin * 2,
         height: stoneWidth * (boardSize - 1) + boardSize * 1 + margin * 2,
-      }}>
+      }}
+    >
       <View
         style={{
           ...styles.horizontalLines,
           width: stoneWidth * (boardSize - 1) + boardSize * 1,
           height: stoneWidth * (boardSize - 1) + boardSize * 1,
-        }}>
+        }}
+      >
         {horizontalLines.map((hl, i) => (
           <View key={i} style={hl.style}></View>
         ))}
@@ -111,7 +114,8 @@ const Board: React.FC = (): JSX.Element => {
           ...styles.verticalLines,
           width: stoneWidth * (boardSize - 1) + boardSize * 1,
           height: stoneWidth * (boardSize - 1) + boardSize * 1,
-        }}>
+        }}
+      >
         {verticalLines.map((vl, i) => (
           <View key={i} style={vl.style}></View>
         ))}
@@ -156,5 +160,3 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
 });
-
-export default Board;

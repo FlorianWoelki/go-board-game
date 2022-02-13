@@ -1,6 +1,7 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, View, ViewStyle } from 'react-native';
+import { Intersection } from './Intersection';
 
 export const Board: React.FC = (): JSX.Element => {
   const hoshiOffset = 2; // offset for 9x9 board
@@ -9,9 +10,10 @@ export const Board: React.FC = (): JSX.Element => {
   const boardSize = 9;
 
   const [hoshiPoints, setHoshiPoints] = useState<any[]>([]);
-  const [grid, setGrid] = useState<any[][]>([]);
   const [verticalLines, setVerticalLines] = useState<any[]>([]);
   const [horizontalLines, setHorizontalLines] = useState<any[]>([]);
+  const [intersections, _] = useState<any[][]>([]);
+  const [intersectionElements, setIntersectionElemenets] = useState<any[]>([]);
 
   useEffect(() => {
     setStoneWidth(Math.round(Dimensions.get('window').width / boardSize));
@@ -70,25 +72,20 @@ export const Board: React.FC = (): JSX.Element => {
       setVerticalLines(old => [...old, verticalLine]);
 
       for (let x = 0; x < boardSize; x++) {
-        const intersectionElement = (
-          <View
-            style={{
-              left: x * (stoneWidth + 1),
-              top: y * (stoneWidth + 1),
-            }}
-            data-position-x={x}
-            data-position-y={y}
-          ></View>
-        );
-
-        if (!grid[y]) {
-          grid[y] = [];
+        const intersection = new Intersection(x, y);
+        if (!intersections[y]) {
+          intersections[y] = [];
         }
 
-        grid[y][x] = intersectionElement;
+        intersections[y][x] = intersection;
+        setIntersectionElemenets(old => [...old, intersection]);
       }
     }
   }, [stoneWidth]);
+
+  const handleOnTouch = (x: number, y: number): void => {
+    console.log(x, y);
+  };
 
   return (
     <View
@@ -123,6 +120,29 @@ export const Board: React.FC = (): JSX.Element => {
       {hoshiPoints.map((hp, i) => (
         <View key={i} style={hp.style}></View>
       ))}
+      <View
+        style={{
+          position: 'absolute',
+          top: 18 - boardSize / 2,
+          left: 18 - boardSize / 2,
+        }}
+      >
+        {intersectionElements.map((intersection, i) => (
+          <View
+            key={i}
+            style={{
+              height: 10,
+              width: 10,
+              position: 'absolute',
+              left: intersection.x * (stoneWidth + 1),
+              top: intersection.y * (stoneWidth + 1),
+            }}
+            data-position-x={intersection.x}
+            data-position-y={intersection.y}
+            onTouchStart={() => handleOnTouch(intersection.x, intersection.y)}
+          ></View>
+        ))}
+      </View>
     </View>
   );
 };

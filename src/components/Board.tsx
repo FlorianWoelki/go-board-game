@@ -3,6 +3,26 @@ import { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, View, ViewStyle } from 'react-native';
 import { Intersection } from './Intersection';
 
+type PlayerColor = 'white' | 'black';
+
+interface Move {
+  x: number;
+  y: number;
+  color: PlayerColor;
+}
+
+interface MoveInfo {
+  x: number;
+  y: number;
+  color: PlayerColor;
+  pass: boolean;
+  points: Intersection[];
+  blackStonesCaptured: number;
+  whiteStonesCaptured: number;
+  capturedPositions: Move[];
+  koPoint: null | Omit<Move, 'color'>;
+}
+
 export const Board: React.FC = (): JSX.Element => {
   const hoshiOffset = 2; // offset for 9x9 board
   const margin = 18;
@@ -15,9 +35,7 @@ export const Board: React.FC = (): JSX.Element => {
   const [intersections, _] = useState<Intersection[][]>([]);
   const [intersectionElements, setIntersectionElements] = useState<any[]>([]);
   const [moves, setMoves] = useState<any[]>([]);
-  const [currentPlayer, setCurrentPlayer] = useState<'black' | 'white'>(
-    'black',
-  );
+  const [currentPlayer, setCurrentPlayer] = useState<PlayerColor>('black');
   const [boardCaptures, setBoardCaptures] = useState<{
     black: number;
     white: number;
@@ -64,7 +82,7 @@ export const Board: React.FC = (): JSX.Element => {
         }
 
         const hoshiPoint = { style: { ...styles.hoshi, ...hoshiStyle } };
-        setHoshiPoints(oldHoshiPoints => [...oldHoshiPoints, hoshiPoint]);
+        setHoshiPoints((oldHoshiPoints) => [...oldHoshiPoints, hoshiPoint]);
       }
     }
 
@@ -72,12 +90,12 @@ export const Board: React.FC = (): JSX.Element => {
       const horizontalLine = {
         style: { ...styles.lineHorizontal, marginBottom: stoneWidth },
       };
-      setHorizontalLines(old => [...old, horizontalLine]);
+      setHorizontalLines((old) => [...old, horizontalLine]);
 
       const verticalLine = {
         style: { ...styles.lineVertical, marginRight: stoneWidth },
       };
-      setVerticalLines(old => [...old, verticalLine]);
+      setVerticalLines((old) => [...old, verticalLine]);
 
       for (let x = 0; x < boardSize; x++) {
         const intersection = new Intersection(x, y);
@@ -86,7 +104,7 @@ export const Board: React.FC = (): JSX.Element => {
         }
 
         intersections[y][x] = intersection;
-        setIntersectionElements(old => [
+        setIntersectionElements((old) => [
           ...old,
           { ...intersection, style: {} },
         ]);
@@ -107,7 +125,7 @@ export const Board: React.FC = (): JSX.Element => {
     }
 
     const captures = clearCapturesFor(x, y);
-    setMoves(old => [...old, stateFor(x, y, captures)]);
+    setMoves((old) => [...old, stateFor(x, y, captures)]);
   };
 
   const groupAt = (x: number, y: number, accumulated: Intersection[] = []) => {
@@ -120,10 +138,10 @@ export const Board: React.FC = (): JSX.Element => {
     accumulated.push(point);
 
     neighborsFor(point.getX(), point.getY())
-      .filter(neighbor => {
+      .filter((neighbor) => {
         return !neighbor.isEmpty();
       })
-      .forEach(neighbor => {
+      .forEach((neighbor) => {
         if (neighbor.sameColorAs(point)) {
           groupAt(neighbor.getX(), neighbor.getY(), accumulated);
         }
@@ -135,7 +153,7 @@ export const Board: React.FC = (): JSX.Element => {
   const clearCapturesFor = (x: number, y: number) => {
     const point = intersections[y][x];
     const capturedNeighbors = neighborsFor(point.getX(), point.getY()).filter(
-      neighbor => {
+      (neighbor) => {
         return (
           !neighbor.isEmpty() &&
           !neighbor.sameColorAs(point) &&
@@ -145,16 +163,16 @@ export const Board: React.FC = (): JSX.Element => {
     );
 
     const capturedStones = capturedNeighbors
-      .map(neighbor => {
+      .map((neighbor) => {
         return groupAt(neighbor.getX(), neighbor.getY());
       })
       .flat();
 
-    capturedStones.forEach(cs => {
+    capturedStones.forEach((cs) => {
       if (cs.isBlack()) {
-        setBoardCaptures(old => ({ ...old, black: old.black + 1 }));
+        setBoardCaptures((old) => ({ ...old, black: old.black + 1 }));
       } else {
-        setBoardCaptures(old => ({ ...old, white: old.white + 1 }));
+        setBoardCaptures((old) => ({ ...old, white: old.white + 1 }));
       }
 
       removeAt(cs.getX(), cs.getY());
@@ -175,21 +193,25 @@ export const Board: React.FC = (): JSX.Element => {
     intersections[y][x].setBlack();
   };
 
-  const stateFor = (x: number, y: number, captures: Intersection[]) => {
-    const moveInfo = {
+  const stateFor = (
+    x: number,
+    y: number,
+    captures: Intersection[],
+  ): MoveInfo => {
+    const moveInfo: MoveInfo = {
       x: x,
       y: y,
       color: currentPlayer,
       pass: false,
-      points: intersections.flat().map(i => i.duplicate()),
+      points: intersections.flat().map((i) => i.duplicate()),
       blackStonesCaptured: boardCaptures.black,
       whiteStonesCaptured: boardCaptures.white,
-      capturedPositions: captures.map(c => ({
+      capturedPositions: captures.map((c) => ({
         x: c.getX(),
         y: c.getY(),
         color: isBlackPlaying() ? 'white' : 'black',
       })),
-      koPoint: null as any,
+      koPoint: null,
     };
 
     if (isKoFrom(x, y, captures)) {
@@ -245,7 +267,7 @@ export const Board: React.FC = (): JSX.Element => {
   const hasCapturesFor = (x: number, y: number): boolean => {
     const point = intersections[y][x];
     const capturedNeighbors = neighborsFor(point.getX(), point.getY()).filter(
-      neighbor => {
+      (neighbor) => {
         return (
           !neighbor.isEmpty() &&
           !neighbor.sameColorAs(point) &&
@@ -262,14 +284,16 @@ export const Board: React.FC = (): JSX.Element => {
 
     const emptyPoints = groupAt(point.getX(), point.getY())
       .flat()
-      .map(groupPoint => {
-        return neighborsFor(groupPoint.getX(), groupPoint.getY()).filter(i => {
-          return i.isEmpty();
-        });
+      .map((groupPoint) => {
+        return neighborsFor(groupPoint.getX(), groupPoint.getY()).filter(
+          (i) => {
+            return i.isEmpty();
+          },
+        );
       });
 
     return Array.from(
-      new Set(emptyPoints.flat().map(ee => ee.getY() + '-' + ee.getX())),
+      new Set(emptyPoints.flat().map((ee) => ee.getY() + '-' + ee.getX())),
     ).length;
   };
 
@@ -277,8 +301,8 @@ export const Board: React.FC = (): JSX.Element => {
     const intersection = intersections[y][x];
     const surroundedEmptyPoint =
       intersection.isEmpty() &&
-      neighborsFor(intersection.getX(), intersection.getY()).filter(neighbor =>
-        neighbor.isEmpty(),
+      neighborsFor(intersection.getX(), intersection.getY()).filter(
+        (neighbor) => neighbor.isEmpty(),
       ).length === 0;
     if (!surroundedEmptyPoint) {
       return false;
@@ -288,14 +312,14 @@ export const Board: React.FC = (): JSX.Element => {
     const friendlyNeighbors = neighborsFor(
       intersection.getX(),
       intersection.getY(),
-    ).filter(neighbor => {
+    ).filter((neighbor) => {
       return neighbor.isOccupiedWith(currentPlayer);
     });
 
     const someFriendlyNotInAtari = neighborsFor(
       intersection.getX(),
       intersection.getY(),
-    ).some(neighbor => {
+    ).some((neighbor) => {
       const atari = inAtari(neighbor.getX(), neighbor.getY());
       const friendly = neighbor.isOccupiedWith(currentPlayer);
 
@@ -309,7 +333,7 @@ export const Board: React.FC = (): JSX.Element => {
     const someEnemyInAtari = neighborsFor(
       intersection.getX(),
       intersection.getY(),
-    ).some(neighbor => {
+    ).some((neighbor) => {
       const atari = inAtari(neighbor.getX(), neighbor.getY());
       const enemy = !neighbor.isOccupiedWith(currentPlayer);
 
@@ -363,7 +387,7 @@ export const Board: React.FC = (): JSX.Element => {
         intersection.duplicate();
 
       const intersectionEl = intersectionElements.find(
-        ie => ie.x === intersection.getX() && ie.y === intersection.getY(),
+        (ie) => ie.x === intersection.getX() && ie.y === intersection.getY(),
       );
 
       if (intersection.isEmpty()) {

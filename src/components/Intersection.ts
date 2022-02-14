@@ -1,9 +1,11 @@
+type IntersectionValue = 'empty' | 'black' | 'white';
+
 export class Intersection {
   private x: number;
   private y: number;
-  private value: string;
+  private value: IntersectionValue;
 
-  constructor(x: number, y: number, value: string = 'empty') {
+  constructor(x: number, y: number, value: IntersectionValue = 'empty') {
     this.x = x;
     this.y = y;
     this.value = value;

@@ -12,8 +12,8 @@ interface Move {
 }
 
 interface MoveInfo {
-  x: number;
-  y: number;
+  x: number | null;
+  y: number | null;
   color: PlayerColor;
   pass: boolean;
   points: Intersection[];
@@ -40,6 +40,11 @@ export const Board: React.FC = (): JSX.Element => {
     black: number;
     white: number;
   }>({ black: 0, white: 0 });
+  const [deadPoints, setDeadPoints] = useState<Omit<Move, 'color'>[]>([]);
+  const [territoryPoints, setTerritoryPoints] = useState<{
+    black: Omit<Move, 'color'>[];
+    white: Omit<Move, 'color'>[];
+  }>({ black: [], white: [] });
 
   useEffect(() => {
     setStoneWidth(Math.round(Dimensions.get('window').width / boardSize));
@@ -191,6 +196,36 @@ export const Board: React.FC = (): JSX.Element => {
 
   const blackAt = (x: number, y: number) => {
     intersections[y][x].setBlack();
+  };
+
+  const stateForPass = (): MoveInfo => {
+    return {
+      x: null,
+      y: null,
+      color: currentPlayer,
+      pass: true,
+      points: intersections.flat().map((i) => i.duplicate()),
+      blackStonesCaptured: boardCaptures.black,
+      whiteStonesCaptured: boardCaptures.white,
+      capturedPositions: [],
+      koPoint: null,
+    };
+  };
+
+  const pass = (): void => {
+    if (!isGameOver()) {
+      moves.push(stateForPass());
+    }
+  };
+
+  const isGameOver = (): boolean => {
+    if (moves.length < 2) {
+      return false;
+    }
+
+    const cm = currentMove();
+    const pm = moves[moves.length - 2];
+    return cm.pass && pm.pass;
   };
 
   const stateFor = (
@@ -367,8 +402,17 @@ export const Board: React.FC = (): JSX.Element => {
     return moves[moves.length - 1];
   };
 
+  const removeScoringState = () => {
+    setDeadPoints([]);
+    setTerritoryPoints({ black: [], white: [] });
+  };
+
   useEffect(() => {
     const cm = currentMove();
+
+    if (!isGameOver()) {
+      removeScoringState();
+    }
 
     if (!cm) {
       setCurrentPlayer('black');
@@ -421,18 +465,171 @@ export const Board: React.FC = (): JSX.Element => {
       cm.koPoint = null;
     }
 
-    if (cm.pass) {
-      // pass
-    } else {
-    }
-
     setBoardCaptures({
       black: cm.blackStonesCaptured,
       white: cm.whiteStonesCaptured,
     });
 
+    //if (isGameOver()) {
+    renderTerritory();
+    //}
+
     console.log(currentPlayer, 'played at', cm.x, cm.y);
   }, [moves]);
+
+  const renderTerritory = () => {
+    intersections.flat().forEach((i) => {
+      const intersectionEl = intersectionElements.find(
+        (ie) => ie.x === i.getX() && ie.y === i.getY(),
+      );
+
+      if (isDeadAt(i.getX(), i.getY())) {
+        intersectionEl.style = {};
+      } else {
+      }
+
+      setIntersectionElements([...intersectionElements]);
+    });
+
+    checkTerritory();
+
+    territoryPoints.black.forEach((tp) => {
+      const intersectionEl = intersectionElements.find(
+        (ie) => ie.x === tp.x && ie.y === tp.y,
+      );
+      intersectionEl.style = {
+        ...intersectionEl.style,
+        width: 28 / 4,
+        height: 28 / 4,
+        marginLeft: 1,
+        marginTop: 1,
+        backgroundColor: 'black',
+      };
+      setIntersectionElements([...intersectionElements]);
+    });
+
+    territoryPoints.white.forEach((tp) => {
+      const intersectionEl = intersectionElements.find(
+        (ie) => ie.x === tp.x && ie.y === tp.y,
+      );
+      intersectionEl.style = {
+        ...intersectionEl.style,
+        width: 28 / 4,
+        height: 28 / 4,
+        marginLeft: 1,
+        marginTop: 1,
+        backgroundColor: 'white',
+      };
+      setIntersectionElements([...intersectionElements]);
+    });
+  };
+
+  const checkTerritory = () => {
+    setTerritoryPoints({ black: [], white: [] });
+
+    const emptyOrDeadPoints = intersections.flat().filter((i) => {
+      return i.isEmpty() || isDeadAt(i.getX(), i.getY());
+    });
+
+    let checkedPoints: Intersection[] = [];
+
+    emptyOrDeadPoints.forEach((ep) => {
+      if (checkedPoints.indexOf(ep) > -1) {
+      } else {
+        checkedPoints = checkedPoints.concat(
+          checkTerritoryStartingAt(ep.getX(), ep.getY()),
+        );
+      }
+    });
+  };
+
+  const surroundedPointsWithBoundaryAt = (
+    x: number,
+    y: number,
+    accumulated: Intersection[] = [],
+  ) => {
+    const point = intersections[y][x];
+
+    if (accumulated.indexOf(point) > -1) {
+      return accumulated;
+    }
+
+    accumulated.push(point);
+
+    neighborsFor(point.getX(), point.getY()).filter((neighbor) => {
+      if (neighbor.isEmpty() || isDeadAt(neighbor.getX(), neighbor.getY())) {
+        surroundedPointsWithBoundaryAt(
+          neighbor.getX(),
+          neighbor.getY(),
+          accumulated,
+        );
+      } else {
+        accumulated.push(neighbor);
+      }
+    });
+
+    return accumulated;
+  };
+
+  const checkTerritoryStartingAt = (x: number, y: number) => {
+    const pointsWithBoundary = surroundedPointsWithBoundaryAt(x, y);
+    const occupiedPoints = pointsWithBoundary.filter((cp) => {
+      return !isDeadAt(cp.getX(), cp.getY()) && !cp.isEmpty();
+    });
+    const nonOccupiedPoints = pointsWithBoundary.filter((cp) => {
+      return isDeadAt(cp.getX(), cp.getY()) || cp.isEmpty();
+    });
+
+    const surroundingColors = Array.from(
+      new Set(occupiedPoints.map((op) => op.getValue())),
+    );
+
+    if (surroundingColors.length === 1 && surroundingColors[0] !== 'empty') {
+      const territoryColor = surroundingColors[0];
+
+      nonOccupiedPoints.forEach((nop) => {
+        markTerritory(nop.getX(), nop.getY(), territoryColor);
+      });
+    }
+
+    return nonOccupiedPoints;
+  };
+
+  const markTerritory = (x: number, y: number, color: 'black' | 'white') => {
+    const pointIsMarkedTerritory = territoryPoints[color].some(
+      (point) => point.x === x && point.y === y,
+    );
+
+    if (!pointIsMarkedTerritory) {
+      territoryPoints[color].push({ x: x, y: y });
+    }
+  };
+
+  const toggleDeadAt = (x: number, y: number) => {
+    const alreadyDead = isDeadAt(x, y);
+
+    groupAt(x, y).forEach((intersection) => {
+      if (alreadyDead) {
+        setDeadPoints((old) =>
+          old.filter(
+            (dead) =>
+              !(
+                dead.y === intersection.getY() && dead.x === intersection.getX()
+              ),
+          ),
+        );
+      } else {
+        setDeadPoints((old) => [
+          ...old,
+          { x: intersection.getX(), y: intersection.getY() },
+        ]);
+      }
+    });
+  };
+
+  const isDeadAt = (x: number, y: number) => {
+    return deadPoints.some((dead) => dead.x === x && dead.y === y);
+  };
 
   return (
     <View
@@ -488,7 +685,11 @@ export const Board: React.FC = (): JSX.Element => {
               ...intersection.style,
             }}
             onTouchStart={() => {
-              handleOnTouch(intersection.x, intersection.y);
+              if (isGameOver()) {
+                toggleDeadAt(intersection.x, intersection.y);
+              } else {
+                handleOnTouch(intersection.x, intersection.y);
+              }
             }}
           ></View>
         ))}

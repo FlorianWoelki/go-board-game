@@ -11,6 +11,10 @@ export class Intersection {
     this.value = value;
   }
 
+  getValue(): IntersectionValue {
+    return this.value;
+  }
+
   getY(): number {
     return this.y;
   }

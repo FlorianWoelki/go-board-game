@@ -470,9 +470,9 @@ export const Board: React.FC = (): JSX.Element => {
       white: cm.whiteStonesCaptured,
     });
 
-    //if (isGameOver()) {
-    renderTerritory();
-    //}
+    if (isGameOver()) {
+      renderTerritory();
+    }
 
     console.log(currentPlayer, 'played at', cm.x, cm.y);
   }, [moves]);
@@ -629,6 +629,26 @@ export const Board: React.FC = (): JSX.Element => {
 
   const isDeadAt = (x: number, y: number) => {
     return deadPoints.some((dead) => dead.x === x && dead.y === y);
+  };
+
+  const score = () => {
+    const blackDeadAsCaptures = deadPoints.filter((dp) =>
+      intersections[dp.y][dp.x].isBlack(),
+    );
+    const whiteDeadAsCaptures = deadPoints.filter((dp) =>
+      intersections[dp.y][dp.x].isWhite(),
+    );
+
+    return {
+      black:
+        territoryPoints.black.length +
+        boardCaptures.white +
+        whiteDeadAsCaptures.length,
+      white:
+        territoryPoints.white.length +
+        boardCaptures.black +
+        blackDeadAsCaptures.length,
+    };
   };
 
   return (

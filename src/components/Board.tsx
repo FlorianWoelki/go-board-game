@@ -12,8 +12,16 @@ export const Board: React.FC = (): JSX.Element => {
   const [hoshiPoints, setHoshiPoints] = useState<any[]>([]);
   const [verticalLines, setVerticalLines] = useState<any[]>([]);
   const [horizontalLines, setHorizontalLines] = useState<any[]>([]);
-  const [intersections, _] = useState<any[][]>([]);
-  const [intersectionElements, setIntersectionElemenets] = useState<any[]>([]);
+  const [intersections, _] = useState<Intersection[][]>([]);
+  const [intersectionElements, setIntersectionElements] = useState<any[]>([]);
+  const [moves, setMoves] = useState<any[]>([]);
+  const [currentPlayer, setCurrentPlayer] = useState<'black' | 'white'>(
+    'black',
+  );
+  const [boardCaptures, setBoardCaptures] = useState<{
+    black: number;
+    white: number;
+  }>({ black: 0, white: 0 });
 
   useEffect(() => {
     setStoneWidth(Math.round(Dimensions.get('window').width / boardSize));
@@ -78,14 +86,326 @@ export const Board: React.FC = (): JSX.Element => {
         }
 
         intersections[y][x] = intersection;
-        setIntersectionElemenets(old => [...old, intersection]);
+        setIntersectionElements(old => [
+          ...old,
+          { ...intersection, style: {} },
+        ]);
       }
     }
   }, [stoneWidth]);
 
   const handleOnTouch = (x: number, y: number): void => {
-    console.log(x, y);
+    if (isIllegalAt(x, y)) {
+      console.log('illegal move');
+      return;
+    }
+
+    if (currentPlayer === 'black') {
+      blackAt(x, y);
+    } else {
+      whiteAt(x, y);
+    }
+
+    const captures = clearCapturesFor(x, y);
+    setMoves(old => [...old, stateFor(x, y, captures)]);
   };
+
+  const groupAt = (x: number, y: number, accumulated: Intersection[] = []) => {
+    const point = intersections[y][x];
+
+    if (accumulated.indexOf(point) > -1) {
+      return accumulated;
+    }
+
+    accumulated.push(point);
+
+    neighborsFor(point.getX(), point.getY())
+      .filter(neighbor => {
+        return !neighbor.isEmpty();
+      })
+      .forEach(neighbor => {
+        if (neighbor.sameColorAs(point)) {
+          groupAt(neighbor.getX(), neighbor.getY(), accumulated);
+        }
+      });
+
+    return accumulated;
+  };
+
+  const clearCapturesFor = (x: number, y: number) => {
+    const point = intersections[y][x];
+    const capturedNeighbors = neighborsFor(point.getX(), point.getY()).filter(
+      neighbor => {
+        return (
+          !neighbor.isEmpty() &&
+          !neighbor.sameColorAs(point) &&
+          libertiesAt(neighbor.getX(), neighbor.getY()) === 0
+        );
+      },
+    );
+
+    const capturedStones = capturedNeighbors
+      .map(neighbor => {
+        return groupAt(neighbor.getX(), neighbor.getY());
+      })
+      .flat();
+
+    capturedStones.forEach(cs => {
+      if (cs.isBlack()) {
+        setBoardCaptures(old => ({ ...old, black: old.black + 1 }));
+      } else {
+        setBoardCaptures(old => ({ ...old, white: old.white + 1 }));
+      }
+
+      removeAt(cs.getX(), cs.getY());
+    });
+
+    return capturedStones;
+  };
+
+  const removeAt = (x: number, y: number) => {
+    intersections[y][x].setEmpty();
+  };
+
+  const whiteAt = (x: number, y: number) => {
+    intersections[y][x].setWhite();
+  };
+
+  const blackAt = (x: number, y: number) => {
+    intersections[y][x].setBlack();
+  };
+
+  const stateFor = (x: number, y: number, captures: Intersection[]) => {
+    const moveInfo = {
+      x: x,
+      y: y,
+      color: currentPlayer,
+      pass: false,
+      points: intersections.flat().map(i => i.duplicate()),
+      blackStonesCaptured: boardCaptures.black,
+      whiteStonesCaptured: boardCaptures.white,
+      capturedPositions: captures.map(c => ({
+        x: c.getX(),
+        y: c.getY(),
+        color: isBlackPlaying() ? 'white' : 'black',
+      })),
+      koPoint: null as any,
+    };
+
+    if (isKoFrom(x, y, captures)) {
+      moveInfo.koPoint = { x: captures[0].getX(), y: captures[0].getY() };
+    }
+
+    return moveInfo;
+  };
+
+  const isKoFrom = (
+    x: number,
+    y: number,
+    captures: Intersection[],
+  ): boolean => {
+    const point = intersections[y][x];
+    return (
+      captures.length === 1 &&
+      groupAt(point.getX(), point.getY()).length === 1 &&
+      inAtari(point.getX(), point.getY())
+    );
+  };
+
+  const inAtari = (x: number, y: number): boolean => {
+    return libertiesAt(x, y) === 1;
+  };
+
+  const isBlackPlaying = (): boolean => {
+    return currentPlayer === 'black';
+  };
+
+  const neighborsFor = (x: number, y: number): Intersection[] => {
+    const neighbors = [];
+
+    if (x > 0) {
+      neighbors.push(intersections[y][x - 1]);
+    }
+
+    if (x < boardSize - 1) {
+      neighbors.push(intersections[y][x + 1]);
+    }
+
+    if (y > 0) {
+      neighbors.push(intersections[y - 1][x]);
+    }
+
+    if (y < boardSize - 1) {
+      neighbors.push(intersections[y + 1][x]);
+    }
+
+    return neighbors;
+  };
+
+  const hasCapturesFor = (x: number, y: number): boolean => {
+    const point = intersections[y][x];
+    const capturedNeighbors = neighborsFor(point.getX(), point.getY()).filter(
+      neighbor => {
+        return (
+          !neighbor.isEmpty() &&
+          !neighbor.sameColorAs(point) &&
+          libertiesAt(neighbor.getX(), neighbor.getY()) === 0
+        );
+      },
+    );
+
+    return capturedNeighbors.length > 0;
+  };
+
+  const libertiesAt = (x: number, y: number) => {
+    const point = intersections[y][x];
+
+    const emptyPoints = groupAt(point.getX(), point.getY())
+      .flat()
+      .map(groupPoint => {
+        return neighborsFor(groupPoint.getX(), groupPoint.getY()).filter(i => {
+          return i.isEmpty();
+        });
+      });
+
+    return Array.from(
+      new Set(emptyPoints.flat().map(ee => ee.getY() + '-' + ee.getX())),
+    ).length;
+  };
+
+  const wouldBeSuicide = (x: number, y: number): boolean => {
+    const intersection = intersections[y][x];
+    const surroundedEmptyPoint =
+      intersection.isEmpty() &&
+      neighborsFor(intersection.getX(), intersection.getY()).filter(neighbor =>
+        neighbor.isEmpty(),
+      ).length === 0;
+    if (!surroundedEmptyPoint) {
+      return false;
+    }
+
+    let suicide = true;
+    const friendlyNeighbors = neighborsFor(
+      intersection.getX(),
+      intersection.getY(),
+    ).filter(neighbor => {
+      return neighbor.isOccupiedWith(currentPlayer);
+    });
+
+    const someFriendlyNotInAtari = neighborsFor(
+      intersection.getX(),
+      intersection.getY(),
+    ).some(neighbor => {
+      const atari = inAtari(neighbor.getX(), neighbor.getY());
+      const friendly = neighbor.isOccupiedWith(currentPlayer);
+
+      return friendly && !atari;
+    });
+
+    if (someFriendlyNotInAtari) {
+      suicide = false;
+    }
+
+    const someEnemyInAtari = neighborsFor(
+      intersection.getX(),
+      intersection.getY(),
+    ).some(neighbor => {
+      const atari = inAtari(neighbor.getX(), neighbor.getY());
+      const enemy = !neighbor.isOccupiedWith(currentPlayer);
+
+      return atari && enemy;
+    });
+
+    if (someEnemyInAtari) {
+      suicide = false;
+    }
+
+    return suicide;
+  };
+
+  const isIllegalAt = (x: number, y: number): boolean => {
+    if (moves.length === 0) {
+      return false;
+    }
+
+    const intersection = intersections[y][x];
+
+    const isEmpty = intersection.isEmpty();
+    const isCapturing = hasCapturesFor(x, y);
+    const isSuicide = wouldBeSuicide(x, y);
+    const koPoint = currentMove().koPoint;
+    const isKoViolation = koPoint && koPoint.y === y && koPoint.x === x;
+
+    return !isEmpty || isKoViolation || (isSuicide && !isCapturing);
+  };
+
+  const currentMove = () => {
+    return moves[moves.length - 1];
+  };
+
+  useEffect(() => {
+    const cm = currentMove();
+
+    if (!cm) {
+      setCurrentPlayer('black');
+      setBoardCaptures({ black: 0, white: 0 });
+      return;
+    }
+
+    if (cm.color === 'black') {
+      setCurrentPlayer('white');
+    } else {
+      setCurrentPlayer('black');
+    }
+
+    cm.points.forEach((intersection: Intersection) => {
+      intersections[intersection.getY()][intersection.getX()] =
+        intersection.duplicate();
+
+      const intersectionEl = intersectionElements.find(
+        ie => ie.x === intersection.getX() && ie.y === intersection.getY(),
+      );
+
+      if (intersection.isEmpty()) {
+        intersectionEl.style = { width: 28 + 1, height: 28 + 1 };
+      } else {
+        let color = 'black';
+        if (intersection.isBlack()) {
+          color = 'black';
+        } else {
+          color = 'white';
+        }
+
+        intersectionEl.style = {
+          width: 28 - 1,
+          height: 28 - 1,
+          borderRadius: 28 / 2,
+          backgroundColor: color,
+          borderColor: color,
+        } as ViewStyle;
+      }
+
+      setIntersectionElements([...intersectionElements]);
+    });
+
+    if (cm.koPoint) {
+      cm.koPoint = intersections[cm.koPoint.y][cm.koPoint.x];
+    } else {
+      cm.koPoint = null;
+    }
+
+    if (cm.pass) {
+      // pass
+    } else {
+    }
+
+    setBoardCaptures({
+      black: cm.blackStonesCaptured,
+      white: cm.whiteStonesCaptured,
+    });
+
+    console.log(currentPlayer, 'played at', cm.x, cm.y);
+  }, [moves]);
 
   return (
     <View
@@ -136,10 +456,11 @@ export const Board: React.FC = (): JSX.Element => {
               position: 'absolute',
               left: intersection.x * (stoneWidth + 1),
               top: intersection.y * (stoneWidth + 1),
+              ...intersection.style,
             }}
-            data-position-x={intersection.x}
-            data-position-y={intersection.y}
-            onTouchStart={() => handleOnTouch(intersection.x, intersection.y)}
+            onTouchStart={() => {
+              handleOnTouch(intersection.x, intersection.y);
+            }}
           ></View>
         ))}
       </View>

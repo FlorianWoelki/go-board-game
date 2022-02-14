@@ -9,6 +9,14 @@ export class Intersection {
     this.value = value;
   }
 
+  getY(): number {
+    return this.y;
+  }
+
+  getX(): number {
+    return this.x;
+  }
+
   duplicate(): Intersection {
     const intersection = new Intersection(this.x, this.y, this.value);
     return intersection;

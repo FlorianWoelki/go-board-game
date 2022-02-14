@@ -2,6 +2,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { BoardDimension } from '../types/BoardDimension';
+import { ViewStyleObject } from '../types/ViewStyleObject';
 import { useHoshiPoints } from './hooks/useHoshiPoints';
 
 interface LineRendererProps {
@@ -16,8 +17,8 @@ export const LineRenderer: React.FC<LineRendererProps> = ({
   const hoshiPoints = useHoshiPoints({ ...dim }, styles.hoshi, [
     dim.stoneWidth,
   ]);
-  const [verticalLines, setVerticalLines] = useState<any[]>([]);
-  const [horizontalLines, setHorizontalLines] = useState<any[]>([]);
+  const [verticalLines, setVerticalLines] = useState<ViewStyleObject[]>([]);
+  const [horizontalLines, setHorizontalLines] = useState<ViewStyleObject[]>([]);
 
   useEffect(() => {
     if (!dim.stoneWidth) {

@@ -1,17 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { ViewStyle } from 'react-native';
 import { BoardDimension } from '../../types/BoardDimension';
-
-interface HoshiPoint {
-  style: ViewStyle;
-}
+import { ViewStyleObject } from '../../types/ViewStyleObject';
 
 export const useHoshiPoints = (
   { size, margin, stoneWidth }: BoardDimension,
   defaultStyle: any,
   deps: React.DependencyList | undefined,
-): HoshiPoint[] => {
-  const [hoshiPoints, setHoshiPoints] = useState<HoshiPoint[]>([]);
+): ViewStyleObject[] => {
+  const [hoshiPoints, setHoshiPoints] = useState<ViewStyleObject[]>([]);
 
   useEffect(() => {
     if (!stoneWidth) {

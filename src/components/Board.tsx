@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useEffect, useState } from 'react';
-import { Dimensions, StyleSheet, View, ViewStyle } from 'react-native';
+import { Dimensions, StyleSheet, View, ViewStyle, Text } from 'react-native';
 import { Intersection } from './Intersection';
 import { LineRenderer } from './LineRenderer';
 
@@ -34,7 +34,7 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
 
   const [stoneWidth, setStoneWidth] = useState<number>(0);
 
-  const [intersections, _] = useState<Intersection[][]>([]);
+  const [intersections, setIntersections] = useState<Intersection[][]>([]);
   const [intersectionElements, setIntersectionElements] = useState<any[]>([]);
   const [moves, setMoves] = useState<any[]>([]);
   const [currentPlayer, setCurrentPlayer] = useState<PlayerColor>('black');
@@ -59,11 +59,19 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
 
   const createIntersection = (x: number, y: number): void => {
     const intersection = new Intersection(x, y);
-    if (!intersections[y]) {
-      intersections[y] = [];
-    }
+    setIntersections((prevIntersections) => {
+      const newIntersections = [...prevIntersections];
+      if (newIntersections[0]) {
+        newIntersections[0] = [...newIntersections[0]];
+      }
+      if (!newIntersections[y]) {
+        newIntersections[y] = [];
+      }
 
-    intersections[y][x] = intersection;
+      newIntersections[y][x] = intersection;
+      return newIntersections;
+    });
+
     setIntersectionElements((old) => [...old, { ...intersection, style: {} }]);
   };
 
@@ -142,10 +150,12 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
 
   const whiteAt = (x: number, y: number) => {
     intersections[y][x].setWhite();
+    renderTerritory();
   };
 
   const blackAt = (x: number, y: number) => {
     intersections[y][x].setBlack();
+    renderTerritory();
   };
 
   const stateForPass = (): MoveInfo => {
@@ -415,14 +425,14 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
       cm.koPoint = null;
     }
 
+    //if (isGameOver()) {
+    renderTerritory();
+    //}
+
     setBoardCaptures({
       black: cm.blackStonesCaptured,
       white: cm.whiteStonesCaptured,
     });
-
-    //if (isGameOver()) {
-    renderTerritory();
-    //}
 
     console.log(currentPlayer, 'played at', cm.x, cm.y);
   }, [moves]);
@@ -444,33 +454,43 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     checkTerritory();
 
     territoryPoints.black.forEach((tp) => {
-      const intersectionEl = intersectionElements.find(
-        (ie) => ie.x === tp.x && ie.y === tp.y,
-      );
-      intersectionEl.style = {
-        ...intersectionEl.style,
-        width: 28 / 4,
-        height: 28 / 4,
-        marginLeft: 1,
-        marginTop: 1,
-        backgroundColor: 'black',
-      };
-      setIntersectionElements([...intersectionElements]);
+      setIntersectionElements((previous) => {
+        return [
+          ...previous.map((p) => {
+            if (p.x === tp.x && p.y === tp.y) {
+              p.style = {
+                ...p.style,
+                width: 28 / 4,
+                height: 28 / 4,
+                marginLeft: 1,
+                marginTop: 1,
+                backgroundColor: 'black',
+              };
+            }
+            return p;
+          }),
+        ];
+      });
     });
 
     territoryPoints.white.forEach((tp) => {
-      const intersectionEl = intersectionElements.find(
-        (ie) => ie.x === tp.x && ie.y === tp.y,
-      );
-      intersectionEl.style = {
-        ...intersectionEl.style,
-        width: 28 / 4,
-        height: 28 / 4,
-        marginLeft: 1,
-        marginTop: 1,
-        backgroundColor: 'white',
-      };
-      setIntersectionElements([...intersectionElements]);
+      setIntersectionElements((previous) => {
+        return [
+          ...previous.map((p) => {
+            if (p.x === tp.x && p.y === tp.y) {
+              p.style = {
+                ...p.style,
+                width: 28 / 4,
+                height: 28 / 4,
+                marginLeft: 1,
+                marginTop: 1,
+                backgroundColor: 'white',
+              };
+            }
+            return p;
+          }),
+        ];
+      });
     });
   };
 
@@ -551,7 +571,9 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     );
 
     if (!pointIsMarkedTerritory) {
-      territoryPoints[color].push({ x: x, y: y });
+      const newTerritoryPoints = { ...territoryPoints };
+      newTerritoryPoints[color].push({ x, y });
+      setTerritoryPoints(newTerritoryPoints);
     }
   };
 
@@ -602,48 +624,60 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
   };
 
   return (
-    <View
-      style={{
-        ...styles.board,
-        width: stoneWidth * (size - 1) + size * 1 + margin * 2,
-        height: stoneWidth * (size - 1) + size * 1 + margin * 2,
-      }}
-    >
-      <LineRenderer
-        dim={{ size, margin, stoneWidth }}
-        onCreateIntersection={createIntersection}
-      />
+    <>
       <View
         style={{
-          position: 'absolute',
-          top: 18 - size / 2,
-          left: 18 - size / 2,
+          marginTop: 18,
+          flexDirection: 'row',
+          justifyContent: 'center',
         }}
       >
-        {intersectionElements.map((intersection, i) => (
-          <View
-            key={i}
-            style={{
-              height: 28,
-              width: 28,
-              position: 'absolute',
-              marginLeft: -8,
-              marginTop: -8,
-              left: intersection.x * (stoneWidth + 1),
-              top: intersection.y * (stoneWidth + 1),
-              ...intersection.style,
-            }}
-            onTouchStart={() => {
-              if (isGameOver()) {
-                toggleDeadAt(intersection.x, intersection.y);
-              } else {
-                handleOnTouch(intersection.x, intersection.y);
-              }
-            }}
-          ></View>
-        ))}
+        <Text style={{ marginRight: 16 }}>Black: {score().black}</Text>
+        <Text>White: {score().white}</Text>
       </View>
-    </View>
+      <View
+        style={{
+          ...styles.board,
+          width: stoneWidth * (size - 1) + size * 1 + margin * 2,
+          height: stoneWidth * (size - 1) + size * 1 + margin * 2,
+        }}
+      >
+        <LineRenderer
+          dim={{ size, margin, stoneWidth }}
+          onCreateIntersection={createIntersection}
+        />
+        <View
+          style={{
+            position: 'absolute',
+            top: 18 - size / 2,
+            left: 18 - size / 2,
+          }}
+        >
+          {intersectionElements.map((intersection, i) => (
+            <View
+              key={i}
+              style={{
+                height: 28,
+                width: 28,
+                position: 'absolute',
+                marginLeft: -8,
+                marginTop: -8,
+                left: intersection.x * (stoneWidth + 1),
+                top: intersection.y * (stoneWidth + 1),
+                ...intersection.style,
+              }}
+              onTouchStart={() => {
+                if (isGameOver()) {
+                  toggleDeadAt(intersection.x, intersection.y);
+                } else {
+                  handleOnTouch(intersection.x, intersection.y);
+                }
+              }}
+            ></View>
+          ))}
+        </View>
+      </View>
+    </>
   );
 };
 
@@ -651,32 +685,5 @@ const styles = StyleSheet.create({
   board: {
     position: 'relative',
     backgroundColor: 'rgb(226, 188, 106)',
-  },
-  horizontalLines: {
-    margin: 18,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-  },
-  verticalLines: {
-    margin: 18,
-    flexDirection: 'row',
-  },
-  lineHorizontal: {
-    backgroundColor: 'rgb(135, 113, 63)',
-    height: 1,
-    width: '100%',
-  },
-  lineVertical: {
-    width: 1,
-    height: '100%',
-    backgroundColor: 'rgb(135, 113, 63)',
-  },
-  hoshi: {
-    width: 2 * 2 + 1,
-    height: 2 * 2 + 1,
-    borderRadius: 2 * 2 + 1,
-    backgroundColor: 'rgb(135, 113, 63)',
-    position: 'absolute',
   },
 });

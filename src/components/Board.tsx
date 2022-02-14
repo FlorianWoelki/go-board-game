@@ -391,7 +391,10 @@ export const Board: React.FC = (): JSX.Element => {
       );
 
       if (intersection.isEmpty()) {
-        intersectionEl.style = { width: 28 + 1, height: 28 + 1 };
+        intersectionEl.style = {
+          width: 28,
+          height: 28,
+        };
       } else {
         let color = 'black';
         if (intersection.isBlack()) {
@@ -475,9 +478,11 @@ export const Board: React.FC = (): JSX.Element => {
           <View
             key={i}
             style={{
-              height: 10,
-              width: 10,
+              height: 28,
+              width: 28,
               position: 'absolute',
+              marginLeft: -8,
+              marginTop: -8,
               left: intersection.x * (stoneWidth + 1),
               top: intersection.y * (stoneWidth + 1),
               ...intersection.style,

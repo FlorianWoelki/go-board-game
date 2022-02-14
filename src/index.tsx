@@ -13,7 +13,7 @@ export default function App() {
     <SafeAreaView style={backgroundStyle}>
       <StatusBar />
 
-      <Board />
+      <Board size={9} />
     </SafeAreaView>
   );
 }

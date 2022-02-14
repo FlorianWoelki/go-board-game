@@ -2,6 +2,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, View, ViewStyle } from 'react-native';
 import { Intersection } from './Intersection';
+import { LineRenderer } from './LineRenderer';
 
 type PlayerColor = 'white' | 'black';
 
@@ -23,15 +24,16 @@ interface MoveInfo {
   koPoint: null | Omit<Move, 'color'>;
 }
 
-export const Board: React.FC = (): JSX.Element => {
-  const hoshiOffset = 2; // offset for 9x9 board
-  const margin = 18;
-  const [stoneWidth, setStoneWidth] = useState<number>(0);
-  const boardSize = 9;
+interface BoardProps {
+  size?: number;
+}
 
-  const [hoshiPoints, setHoshiPoints] = useState<any[]>([]);
-  const [verticalLines, setVerticalLines] = useState<any[]>([]);
-  const [horizontalLines, setHorizontalLines] = useState<any[]>([]);
+export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
+  const margin = 18;
+  const boardSizeOffset = { 9: 0, 13: 1, 19: 2 };
+
+  const [stoneWidth, setStoneWidth] = useState<number>(0);
+
   const [intersections, _] = useState<Intersection[][]>([]);
   const [intersectionElements, setIntersectionElements] = useState<any[]>([]);
   const [moves, setMoves] = useState<any[]>([]);
@@ -47,75 +49,23 @@ export const Board: React.FC = (): JSX.Element => {
   }>({ black: [], white: [] });
 
   useEffect(() => {
-    setStoneWidth(Math.round(Dimensions.get('window').width / boardSize));
-
-    setVerticalLines([]);
-    setHorizontalLines([]);
-    setHoshiPoints([]);
+    setStoneWidth(
+      Math.round(
+        Dimensions.get('window').width / size -
+          boardSizeOffset[size as keyof typeof boardSizeOffset],
+      ),
+    );
   }, []);
 
-  useEffect(() => {
-    if (!stoneWidth) {
-      return;
+  const createIntersection = (x: number, y: number): void => {
+    const intersection = new Intersection(x, y);
+    if (!intersections[y]) {
+      intersections[y] = [];
     }
 
-    for (let hoshiY = 0; hoshiY < 3; hoshiY++) {
-      for (let hoshiX = 0; hoshiX < 3; hoshiX++) {
-        const hoshiStyle: ViewStyle = {};
-        if (hoshiY === 0) {
-          hoshiStyle.top = margin + hoshiOffset * (stoneWidth + 1) - 2;
-        }
-        if (hoshiY === 1) {
-          hoshiStyle.top =
-            margin + ((boardSize + 1) / 2 - 1) * (stoneWidth + 1) - 2;
-        }
-        if (hoshiY === 2) {
-          hoshiStyle.top =
-            margin + (boardSize - hoshiOffset - 1) * (stoneWidth + 1) - 2;
-        }
-
-        if (hoshiX === 0) {
-          hoshiStyle.left = margin + hoshiOffset * (stoneWidth + 1) - 2;
-        }
-        if (hoshiX === 1) {
-          hoshiStyle.left =
-            margin + ((boardSize + 1) / 2 - 1) * (stoneWidth + 1) - 2;
-        }
-        if (hoshiX === 2) {
-          hoshiStyle.left =
-            margin + (boardSize - hoshiOffset - 1) * (stoneWidth + 1) - 2;
-        }
-
-        const hoshiPoint = { style: { ...styles.hoshi, ...hoshiStyle } };
-        setHoshiPoints((oldHoshiPoints) => [...oldHoshiPoints, hoshiPoint]);
-      }
-    }
-
-    for (let y = 0; y < boardSize; y++) {
-      const horizontalLine = {
-        style: { ...styles.lineHorizontal, marginBottom: stoneWidth },
-      };
-      setHorizontalLines((old) => [...old, horizontalLine]);
-
-      const verticalLine = {
-        style: { ...styles.lineVertical, marginRight: stoneWidth },
-      };
-      setVerticalLines((old) => [...old, verticalLine]);
-
-      for (let x = 0; x < boardSize; x++) {
-        const intersection = new Intersection(x, y);
-        if (!intersections[y]) {
-          intersections[y] = [];
-        }
-
-        intersections[y][x] = intersection;
-        setIntersectionElements((old) => [
-          ...old,
-          { ...intersection, style: {} },
-        ]);
-      }
-    }
-  }, [stoneWidth]);
+    intersections[y][x] = intersection;
+    setIntersectionElements((old) => [...old, { ...intersection, style: {} }]);
+  };
 
   const handleOnTouch = (x: number, y: number): void => {
     if (isIllegalAt(x, y)) {
@@ -284,7 +234,7 @@ export const Board: React.FC = (): JSX.Element => {
       neighbors.push(intersections[y][x - 1]);
     }
 
-    if (x < boardSize - 1) {
+    if (x < size - 1) {
       neighbors.push(intersections[y][x + 1]);
     }
 
@@ -292,7 +242,7 @@ export const Board: React.FC = (): JSX.Element => {
       neighbors.push(intersections[y - 1][x]);
     }
 
-    if (y < boardSize - 1) {
+    if (y < size - 1) {
       neighbors.push(intersections[y + 1][x]);
     }
 
@@ -470,9 +420,9 @@ export const Board: React.FC = (): JSX.Element => {
       white: cm.whiteStonesCaptured,
     });
 
-    if (isGameOver()) {
-      renderTerritory();
-    }
+    //if (isGameOver()) {
+    renderTerritory();
+    //}
 
     console.log(currentPlayer, 'played at', cm.x, cm.y);
   }, [moves]);
@@ -655,40 +605,19 @@ export const Board: React.FC = (): JSX.Element => {
     <View
       style={{
         ...styles.board,
-        width: stoneWidth * (boardSize - 1) + boardSize * 1 + margin * 2,
-        height: stoneWidth * (boardSize - 1) + boardSize * 1 + margin * 2,
+        width: stoneWidth * (size - 1) + size * 1 + margin * 2,
+        height: stoneWidth * (size - 1) + size * 1 + margin * 2,
       }}
     >
-      <View
-        style={{
-          ...styles.horizontalLines,
-          width: stoneWidth * (boardSize - 1) + boardSize * 1,
-          height: stoneWidth * (boardSize - 1) + boardSize * 1,
-        }}
-      >
-        {horizontalLines.map((hl, i) => (
-          <View key={i} style={hl.style}></View>
-        ))}
-      </View>
-      <View
-        style={{
-          ...styles.verticalLines,
-          width: stoneWidth * (boardSize - 1) + boardSize * 1,
-          height: stoneWidth * (boardSize - 1) + boardSize * 1,
-        }}
-      >
-        {verticalLines.map((vl, i) => (
-          <View key={i} style={vl.style}></View>
-        ))}
-      </View>
-      {hoshiPoints.map((hp, i) => (
-        <View key={i} style={hp.style}></View>
-      ))}
+      <LineRenderer
+        dim={{ size, margin, stoneWidth }}
+        onCreateIntersection={createIntersection}
+      />
       <View
         style={{
           position: 'absolute',
-          top: 18 - boardSize / 2,
-          left: 18 - boardSize / 2,
+          top: 18 - size / 2,
+          left: 18 - size / 2,
         }}
       >
         {intersectionElements.map((intersection, i) => (

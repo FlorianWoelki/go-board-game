@@ -35,7 +35,7 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     isKoFrom,
     groupAt,
     neighborsFor,
-    libertiesAt,
+    clearCapturesFor,
   } = useGameLogic(size, intersections);
 
   useEffect(() => {
@@ -75,39 +75,18 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
       whiteAt(x, y);
     }
 
-    const captures = clearCapturesFor(x, y);
+    const blackCapture = (x: number, y: number) => {
+      setBoardCaptures((old) => ({ ...old, black: old.black + 1 }));
+      removeAt(x, y);
+    };
+
+    const whiteCapture = (x: number, y: number) => {
+      setBoardCaptures((old) => ({ ...old, white: old.white + 1 }));
+      removeAt(x, y);
+    };
+
+    const captures = clearCapturesFor(x, y, blackCapture, whiteCapture);
     setMoves((old) => [...old, stateFor(x, y, captures)]);
-  };
-
-  const clearCapturesFor = (x: number, y: number) => {
-    const point = intersections[y][x];
-    const capturedNeighbors = neighborsFor(point.getX(), point.getY()).filter(
-      (neighbor) => {
-        return (
-          !neighbor.isEmpty() &&
-          !neighbor.sameColorAs(point) &&
-          libertiesAt(neighbor.getX(), neighbor.getY()) === 0
-        );
-      },
-    );
-
-    const capturedStones = capturedNeighbors
-      .map((neighbor) => {
-        return groupAt(neighbor.getX(), neighbor.getY());
-      })
-      .flat();
-
-    capturedStones.forEach((cs) => {
-      if (cs.isBlack()) {
-        setBoardCaptures((old) => ({ ...old, black: old.black + 1 }));
-      } else {
-        setBoardCaptures((old) => ({ ...old, white: old.white + 1 }));
-      }
-
-      removeAt(cs.getX(), cs.getY());
-    });
-
-    return capturedStones;
   };
 
   const removeAt = (x: number, y: number) => {

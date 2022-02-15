@@ -150,6 +150,40 @@ export const useGameLogic = (size: number, intersections: Intersection[][]) => {
     return suicide;
   };
 
+  const clearCapturesFor = (
+    x: number,
+    y: number,
+    addBlackCapture: (x: number, y: number) => void,
+    addWhiteCapture: (x: number, y: number) => void,
+  ) => {
+    const point = intersections[y][x];
+    const capturedNeighbors = neighborsFor(point.getX(), point.getY()).filter(
+      (neighbor) => {
+        return (
+          !neighbor.isEmpty() &&
+          !neighbor.sameColorAs(point) &&
+          libertiesAt(neighbor.getX(), neighbor.getY()) === 0
+        );
+      },
+    );
+
+    const capturedStones = capturedNeighbors
+      .map((neighbor) => {
+        return groupAt(neighbor.getX(), neighbor.getY());
+      })
+      .flat();
+
+    capturedStones.forEach((cs) => {
+      if (cs.isBlack()) {
+        addBlackCapture(cs.getX(), cs.getY());
+      } else {
+        addWhiteCapture(cs.getX(), cs.getY());
+      }
+    });
+
+    return capturedStones;
+  };
+
   return {
     groupAt,
     neighborsFor,
@@ -158,5 +192,6 @@ export const useGameLogic = (size: number, intersections: Intersection[][]) => {
     isKoFrom,
     hasCapturesFor,
     wouldBeSuicide,
+    clearCapturesFor,
   };
 };

@@ -150,12 +150,10 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
 
   const whiteAt = (x: number, y: number) => {
     intersections[y][x].setWhite();
-    renderTerritory();
   };
 
   const blackAt = (x: number, y: number) => {
     intersections[y][x].setBlack();
-    renderTerritory();
   };
 
   const stateForPass = (): MoveInfo => {
@@ -435,20 +433,23 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     });
 
     console.log(currentPlayer, 'played at', cm.x, cm.y);
+    renderTerritory();
   }, [moves]);
 
   const renderTerritory = () => {
     intersections.flat().forEach((i) => {
-      const intersectionEl = intersectionElements.find(
-        (ie) => ie.x === i.getX() && ie.y === i.getY(),
-      );
+      const updatedIntersectionElements = intersectionElements.map((ie) => {
+        if (
+          ie.x === i.getX() &&
+          ie.y === i.getY() &&
+          isDeadAt(i.getX(), i.getY())
+        ) {
+          return { ...ie, style: {} };
+        }
+        return ie;
+      });
 
-      if (isDeadAt(i.getX(), i.getY())) {
-        intersectionEl.style = {};
-      } else {
-      }
-
-      setIntersectionElements([...intersectionElements]);
+      setIntersectionElements(updatedIntersectionElements);
     });
 
     checkTerritory();

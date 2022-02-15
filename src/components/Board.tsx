@@ -16,7 +16,7 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
   const [stoneWidth, setStoneWidth] = useState<number>(0);
 
   const [intersections, setIntersections] = useState<Intersection[][]>([]);
-  const [moves, setMoves] = useState<any[]>([]);
+  const [moves, setMoves] = useState<MoveInfo[]>([]);
   const [currentPlayer, setCurrentPlayer] = useState<PlayerColor>('black');
   const [boardCaptures, setBoardCaptures] = useState<{
     black: number;
@@ -393,7 +393,8 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     });
 
     if (cm.koPoint) {
-      cm.koPoint = intersections[cm.koPoint.y][cm.koPoint.x];
+      const intersection = intersections[cm.koPoint.y][cm.koPoint.x];
+      cm.koPoint = { x: intersection.getX(), y: intersection.getY() };
     } else {
       cm.koPoint = null;
     }

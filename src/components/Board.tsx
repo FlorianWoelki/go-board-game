@@ -46,6 +46,7 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     black: Omit<Move, 'color'>[];
     white: Omit<Move, 'color'>[];
   }>({ black: [], white: [] });
+  const [shouldRenderTerritory, setRenderTerritory] = useState<boolean>(false);
 
   useEffect(() => {
     setStoneWidth(
@@ -417,7 +418,6 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     }
 
     //if (isGameOver()) {
-    renderTerritory();
     //}
 
     setBoardCaptures({
@@ -426,17 +426,24 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     });
 
     console.log(currentPlayer, 'played at', cm.x, cm.y);
+    setRenderTerritory((old) => !old);
   }, [moves]);
+
+  useEffect(() => {
+    console.log(123);
+  }, []);
 
   const renderTerritory = () => {
     setIntersections((previous) => {
-      const updated = previous.map((i) => {
-        const updated = i.map((ii) => {
-          //ii.style = {};
-          return ii;
-        });
-        return updated;
-      });
+      const updated = previous.map((p) =>
+        p.map((pp) => {
+          if (pp.getValue() === 'empty') {
+            pp.style = {};
+          }
+          return pp;
+        }),
+      );
+
       return updated;
     });
 
@@ -445,13 +452,16 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     territoryPoints.black.forEach((tp) => {
       setIntersections((previous) => {
         const updated = [...previous];
-        updated[tp.y][tp.x].style = {
-          width: 28 / 4,
-          height: 28 / 4,
-          marginLeft: 1,
-          marginTop: 1,
-          backgroundColor: 'black',
-        };
+        const intersection = updated[tp.y][tp.x];
+        if (intersection.getValue() === 'empty') {
+          intersection.style = {
+            width: 28 / 4,
+            height: 28 / 4,
+            marginLeft: 1,
+            marginTop: 1,
+            backgroundColor: 'black',
+          };
+        }
         return updated;
       });
     });
@@ -459,17 +469,28 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     territoryPoints.white.forEach((tp) => {
       setIntersections((previous) => {
         const updated = [...previous];
-        updated[tp.y][tp.x].style = {
-          width: 28 / 4,
-          height: 28 / 4,
-          marginLeft: 1,
-          marginTop: 1,
-          backgroundColor: 'white',
-        };
+        const intersection = updated[tp.y][tp.x];
+        if (intersection.getValue() === 'empty') {
+          intersection.style = {
+            width: 28 / 4,
+            height: 28 / 4,
+            marginLeft: 1,
+            marginTop: 1,
+            backgroundColor: 'white',
+          };
+        }
         return updated;
       });
     });
   };
+
+  useEffect(() => {
+    if (moves.length === 0) {
+      return;
+    }
+
+    renderTerritory();
+  }, [shouldRenderTerritory]);
 
   const checkTerritory = () => {
     setTerritoryPoints({ black: [], white: [] });
@@ -580,7 +601,7 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     return deadPoints.some((dead) => dead.x === x && dead.y === y);
   };
 
-  const score = () => {
+  const score = useMemo(() => {
     const blackDeadAsCaptures = deadPoints.filter((dp) =>
       intersections[dp.y][dp.x].isBlack(),
     );
@@ -598,7 +619,7 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
         boardCaptures.black +
         blackDeadAsCaptures.length,
     };
-  };
+  }, [territoryPoints, boardCaptures, deadPoints]);
 
   return (
     <>
@@ -609,8 +630,8 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
           justifyContent: 'center',
         }}
       >
-        <Text style={{ marginRight: 16 }}>Black: {score().black}</Text>
-        <Text>White: {score().white}</Text>
+        <Text style={{ marginRight: 16 }}>Black: {score.black}</Text>
+        <Text>White: {score.white}</Text>
       </View>
       <View
         style={{
@@ -631,7 +652,6 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
           }}
         >
           {intersections.flat().map((intersection, i) => {
-            console.log(intersection);
             return (
               <View
                 key={i}

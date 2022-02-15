@@ -4,6 +4,7 @@ import { Dimensions, StyleSheet, View, ViewStyle, Text } from 'react-native';
 import { MoveInfo, PlayerColor, Point } from '../types/BoardMove';
 import { Intersection } from './Intersection';
 import { LineRenderer } from './LineRenderer';
+import { useGameLogic } from './hooks/useGameLogic';
 
 interface BoardProps {
   size?: number;
@@ -28,6 +29,14 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     white: Point[];
   }>({ black: [], white: [] });
   const [shouldRenderTerritory, setRenderTerritory] = useState<boolean>(false);
+  const {
+    wouldBeSuicide,
+    hasCapturesFor,
+    isKoFrom,
+    groupAt,
+    neighborsFor,
+    libertiesAt,
+  } = useGameLogic(size, intersections);
 
   useEffect(() => {
     setStoneWidth(
@@ -68,28 +77,6 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
 
     const captures = clearCapturesFor(x, y);
     setMoves((old) => [...old, stateFor(x, y, captures)]);
-  };
-
-  const groupAt = (x: number, y: number, accumulated: Intersection[] = []) => {
-    const point = intersections[y][x];
-
-    if (accumulated.indexOf(point) > -1) {
-      return accumulated;
-    }
-
-    accumulated.push(point);
-
-    neighborsFor(point.getX(), point.getY())
-      .filter((neighbor) => {
-        return !neighbor.isEmpty();
-      })
-      .forEach((neighbor) => {
-        if (neighbor.sameColorAs(point)) {
-          groupAt(neighbor.getX(), neighbor.getY(), accumulated);
-        }
-      });
-
-    return accumulated;
   };
 
   const clearCapturesFor = (x: number, y: number) => {
@@ -181,7 +168,7 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
       capturedPositions: captures.map((c) => ({
         x: c.getX(),
         y: c.getY(),
-        color: isBlackPlaying() ? 'white' : 'black',
+        color: currentPlayer === 'black' ? 'white' : 'black',
       })),
       koPoint: null,
     };
@@ -193,132 +180,6 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     return moveInfo;
   };
 
-  const isKoFrom = (
-    x: number,
-    y: number,
-    captures: Intersection[],
-  ): boolean => {
-    const point = intersections[y][x];
-    return (
-      captures.length === 1 &&
-      groupAt(point.getX(), point.getY()).length === 1 &&
-      inAtari(point.getX(), point.getY())
-    );
-  };
-
-  const inAtari = (x: number, y: number): boolean => {
-    return libertiesAt(x, y) === 1;
-  };
-
-  const isBlackPlaying = (): boolean => {
-    return currentPlayer === 'black';
-  };
-
-  const neighborsFor = (x: number, y: number): Intersection[] => {
-    const neighbors = [];
-
-    if (x > 0) {
-      neighbors.push(intersections[y][x - 1]);
-    }
-
-    if (x < size - 1) {
-      neighbors.push(intersections[y][x + 1]);
-    }
-
-    if (y > 0) {
-      neighbors.push(intersections[y - 1][x]);
-    }
-
-    if (y < size - 1) {
-      neighbors.push(intersections[y + 1][x]);
-    }
-
-    return neighbors;
-  };
-
-  const hasCapturesFor = (x: number, y: number): boolean => {
-    const point = intersections[y][x];
-    const capturedNeighbors = neighborsFor(point.getX(), point.getY()).filter(
-      (neighbor) => {
-        return (
-          !neighbor.isEmpty() &&
-          !neighbor.sameColorAs(point) &&
-          libertiesAt(neighbor.getX(), neighbor.getY()) === 0
-        );
-      },
-    );
-
-    return capturedNeighbors.length > 0;
-  };
-
-  const libertiesAt = (x: number, y: number) => {
-    const point = intersections[y][x];
-
-    const emptyPoints = groupAt(point.getX(), point.getY())
-      .flat()
-      .map((groupPoint) => {
-        return neighborsFor(groupPoint.getX(), groupPoint.getY()).filter(
-          (i) => {
-            return i.isEmpty();
-          },
-        );
-      });
-
-    return Array.from(
-      new Set(emptyPoints.flat().map((ee) => ee.getY() + '-' + ee.getX())),
-    ).length;
-  };
-
-  const wouldBeSuicide = (x: number, y: number): boolean => {
-    const intersection = intersections[y][x];
-    const surroundedEmptyPoint =
-      intersection.isEmpty() &&
-      neighborsFor(intersection.getX(), intersection.getY()).filter(
-        (neighbor) => neighbor.isEmpty(),
-      ).length === 0;
-    if (!surroundedEmptyPoint) {
-      return false;
-    }
-
-    let suicide = true;
-    const friendlyNeighbors = neighborsFor(
-      intersection.getX(),
-      intersection.getY(),
-    ).filter((neighbor) => {
-      return neighbor.isOccupiedWith(currentPlayer);
-    });
-
-    const someFriendlyNotInAtari = neighborsFor(
-      intersection.getX(),
-      intersection.getY(),
-    ).some((neighbor) => {
-      const atari = inAtari(neighbor.getX(), neighbor.getY());
-      const friendly = neighbor.isOccupiedWith(currentPlayer);
-
-      return friendly && !atari;
-    });
-
-    if (someFriendlyNotInAtari) {
-      suicide = false;
-    }
-
-    const someEnemyInAtari = neighborsFor(
-      intersection.getX(),
-      intersection.getY(),
-    ).some((neighbor) => {
-      const atari = inAtari(neighbor.getX(), neighbor.getY());
-      const enemy = !neighbor.isOccupiedWith(currentPlayer);
-
-      return atari && enemy;
-    });
-
-    if (someEnemyInAtari) {
-      suicide = false;
-    }
-
-    return suicide;
-  };
-
   const isIllegalAt = (x: number, y: number): boolean => {
     if (moves.length === 0) {
       return false;
@@ -328,7 +189,7 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
 
     const isEmpty = intersection.isEmpty();
     const isCapturing = hasCapturesFor(x, y);
-    const isSuicide = wouldBeSuicide(x, y);
+    const isSuicide = wouldBeSuicide(x, y, currentPlayer);
     const koPoint = currentMove().koPoint;
     const isKoViolation = koPoint && koPoint.y === y && koPoint.x === x;
 

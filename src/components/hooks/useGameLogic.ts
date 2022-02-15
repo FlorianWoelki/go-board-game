@@ -1,7 +1,11 @@
-import { PlayerColor } from '../../types/BoardMove';
+import { MoveInfo, PlayerColor } from '../../types/BoardMove';
 import { Intersection } from '../Intersection';
 
-export const useGameLogic = (size: number, intersections: Intersection[][]) => {
+export const useGameLogic = (
+  size: number,
+  boardCaptures: { black: number; white: number },
+  intersections: Intersection[][],
+) => {
   const groupAt = (x: number, y: number, accumulated: Intersection[] = []) => {
     const point = intersections[y][x];
 
@@ -184,7 +188,52 @@ export const useGameLogic = (size: number, intersections: Intersection[][]) => {
     return capturedStones;
   };
 
+  const stateForPass = (currentPlayer: PlayerColor): MoveInfo => {
+    return {
+      x: null,
+      y: null,
+      color: currentPlayer,
+      pass: true,
+      points: intersections.flat().map((i) => i.duplicate()),
+      blackStonesCaptured: boardCaptures.black,
+      whiteStonesCaptured: boardCaptures.white,
+      capturedPositions: [],
+      koPoint: null,
+    };
+  };
+
+  const stateFor = (
+    x: number,
+    y: number,
+    currentPlayer: PlayerColor,
+    captures: Intersection[],
+  ): MoveInfo => {
+    const moveInfo: MoveInfo = {
+      x: x,
+      y: y,
+      color: currentPlayer,
+      pass: false,
+      points: intersections.flat().map((i) => i.duplicate()),
+      blackStonesCaptured: boardCaptures.black,
+      whiteStonesCaptured: boardCaptures.white,
+      capturedPositions: captures.map((c) => ({
+        x: c.getX(),
+        y: c.getY(),
+        color: currentPlayer === 'black' ? 'white' : 'black',
+      })),
+      koPoint: null,
+    };
+
+    if (isKoFrom(x, y, captures)) {
+      moveInfo.koPoint = { x: captures[0].getX(), y: captures[0].getY() };
+    }
+
+    return moveInfo;
+  };
+
   return {
+    stateForPass,
+    stateFor,
     groupAt,
     neighborsFor,
     libertiesAt,

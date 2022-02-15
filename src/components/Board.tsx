@@ -30,13 +30,15 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
   }>({ black: [], white: [] });
   const [shouldRenderTerritory, setRenderTerritory] = useState<boolean>(false);
   const {
+    stateForPass,
+    stateFor,
     wouldBeSuicide,
     hasCapturesFor,
     isKoFrom,
     groupAt,
     neighborsFor,
     clearCapturesFor,
-  } = useGameLogic(size, intersections);
+  } = useGameLogic(size, boardCaptures, intersections);
 
   useEffect(() => {
     setStoneWidth(
@@ -86,7 +88,7 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     };
 
     const captures = clearCapturesFor(x, y, blackCapture, whiteCapture);
-    setMoves((old) => [...old, stateFor(x, y, captures)]);
+    setMoves((old) => [...old, stateFor(x, y, currentPlayer, captures)]);
   };
 
   const removeAt = (x: number, y: number) => {
@@ -101,23 +103,9 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     intersections[y][x].setBlack();
   };
 
-  const stateForPass = (): MoveInfo => {
-    return {
-      x: null,
-      y: null,
-      color: currentPlayer,
-      pass: true,
-      points: intersections.flat().map((i) => i.duplicate()),
-      blackStonesCaptured: boardCaptures.black,
-      whiteStonesCaptured: boardCaptures.white,
-      capturedPositions: [],
-      koPoint: null,
-    };
-  };
-
   const pass = (): void => {
     if (!isGameOver()) {
-      moves.push(stateForPass());
+      moves.push(stateForPass(currentPlayer));
     }
   };
 
@@ -129,34 +117,6 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     const cm = currentMove();
     const pm = moves[moves.length - 2];
     return cm.pass && pm.pass;
-  };
-
-  const stateFor = (
-    x: number,
-    y: number,
-    captures: Intersection[],
-  ): MoveInfo => {
-    const moveInfo: MoveInfo = {
-      x: x,
-      y: y,
-      color: currentPlayer,
-      pass: false,
-      points: intersections.flat().map((i) => i.duplicate()),
-      blackStonesCaptured: boardCaptures.black,
-      whiteStonesCaptured: boardCaptures.white,
-      capturedPositions: captures.map((c) => ({
-        x: c.getX(),
-        y: c.getY(),
-        color: currentPlayer === 'black' ? 'white' : 'black',
-      })),
-      koPoint: null,
-    };
-
-    if (isKoFrom(x, y, captures)) {
-      moveInfo.koPoint = { x: captures[0].getX(), y: captures[0].getY() };
-    }
-
-    return moveInfo;
   };
 
   const isIllegalAt = (x: number, y: number): boolean => {

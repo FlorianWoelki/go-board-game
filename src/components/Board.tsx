@@ -35,7 +35,6 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
   const [stoneWidth, setStoneWidth] = useState<number>(0);
 
   const [intersections, setIntersections] = useState<Intersection[][]>([]);
-  const [intersectionElements, setIntersectionElements] = useState<any[]>([]);
   const [moves, setMoves] = useState<any[]>([]);
   const [currentPlayer, setCurrentPlayer] = useState<PlayerColor>('black');
   const [boardCaptures, setBoardCaptures] = useState<{
@@ -71,8 +70,6 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
       newIntersections[y][x] = intersection;
       return newIntersections;
     });
-
-    setIntersectionElements((old) => [...old, { ...intersection, style: {} }]);
   };
 
   const handleOnTouch = (x: number, y: number): void => {
@@ -385,36 +382,32 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     }
 
     cm.points.forEach((intersection: Intersection) => {
-      intersections[intersection.getY()][intersection.getX()] =
-        intersection.duplicate();
-
-      const intersectionEl = intersectionElements.find(
-        (ie) => ie.x === intersection.getX() && ie.y === intersection.getY(),
-      );
-
-      if (intersection.isEmpty()) {
-        intersectionEl.style = {
-          width: 28,
-          height: 28,
-        };
-      } else {
-        let color = 'black';
-        if (intersection.isBlack()) {
-          color = 'black';
+      setIntersections((previous) => {
+        const updated = [...previous];
+        const i = updated[intersection.getY()][intersection.getX()];
+        if (i.isEmpty()) {
+          i.style = {
+            width: 28,
+            height: 28,
+          };
         } else {
-          color = 'white';
+          let color = 'black';
+          if (i.isBlack()) {
+            color = 'black';
+          } else {
+            color = 'white';
+          }
+
+          i.style = {
+            width: 28 - 1,
+            height: 28 - 1,
+            borderRadius: 28 / 2,
+            backgroundColor: color,
+            borderColor: color,
+          } as ViewStyle;
         }
-
-        intersectionEl.style = {
-          width: 28 - 1,
-          height: 28 - 1,
-          borderRadius: 28 / 2,
-          backgroundColor: color,
-          borderColor: color,
-        } as ViewStyle;
-      }
-
-      setIntersectionElements([...intersectionElements]);
+        return updated;
+      });
     });
 
     if (cm.koPoint) {
@@ -433,64 +426,47 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     });
 
     console.log(currentPlayer, 'played at', cm.x, cm.y);
-    renderTerritory();
   }, [moves]);
 
   const renderTerritory = () => {
-    intersections.flat().forEach((i) => {
-      const updatedIntersectionElements = intersectionElements.map((ie) => {
-        if (
-          ie.x === i.getX() &&
-          ie.y === i.getY() &&
-          isDeadAt(i.getX(), i.getY())
-        ) {
-          return { ...ie, style: {} };
-        }
-        return ie;
+    setIntersections((previous) => {
+      const updated = previous.map((i) => {
+        const updated = i.map((ii) => {
+          //ii.style = {};
+          return ii;
+        });
+        return updated;
       });
-
-      setIntersectionElements(updatedIntersectionElements);
+      return updated;
     });
 
     checkTerritory();
 
     territoryPoints.black.forEach((tp) => {
-      setIntersectionElements((previous) => {
-        return [
-          ...previous.map((p) => {
-            if (p.x === tp.x && p.y === tp.y) {
-              p.style = {
-                ...p.style,
-                width: 28 / 4,
-                height: 28 / 4,
-                marginLeft: 1,
-                marginTop: 1,
-                backgroundColor: 'black',
-              };
-            }
-            return p;
-          }),
-        ];
+      setIntersections((previous) => {
+        const updated = [...previous];
+        updated[tp.y][tp.x].style = {
+          width: 28 / 4,
+          height: 28 / 4,
+          marginLeft: 1,
+          marginTop: 1,
+          backgroundColor: 'black',
+        };
+        return updated;
       });
     });
 
     territoryPoints.white.forEach((tp) => {
-      setIntersectionElements((previous) => {
-        return [
-          ...previous.map((p) => {
-            if (p.x === tp.x && p.y === tp.y) {
-              p.style = {
-                ...p.style,
-                width: 28 / 4,
-                height: 28 / 4,
-                marginLeft: 1,
-                marginTop: 1,
-                backgroundColor: 'white',
-              };
-            }
-            return p;
-          }),
-        ];
+      setIntersections((previous) => {
+        const updated = [...previous];
+        updated[tp.y][tp.x].style = {
+          width: 28 / 4,
+          height: 28 / 4,
+          marginLeft: 1,
+          marginTop: 1,
+          backgroundColor: 'white',
+        };
+        return updated;
       });
     });
   };
@@ -654,28 +630,31 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
             left: 18 - size / 2,
           }}
         >
-          {intersectionElements.map((intersection, i) => (
-            <View
-              key={i}
-              style={{
-                height: 28,
-                width: 28,
-                position: 'absolute',
-                marginLeft: -8,
-                marginTop: -8,
-                left: intersection.x * (stoneWidth + 1),
-                top: intersection.y * (stoneWidth + 1),
-                ...intersection.style,
-              }}
-              onTouchStart={() => {
-                if (isGameOver()) {
-                  toggleDeadAt(intersection.x, intersection.y);
-                } else {
-                  handleOnTouch(intersection.x, intersection.y);
-                }
-              }}
-            ></View>
-          ))}
+          {intersections.flat().map((intersection, i) => {
+            console.log(intersection);
+            return (
+              <View
+                key={i}
+                style={{
+                  height: 28,
+                  width: 28,
+                  position: 'absolute',
+                  marginLeft: -8,
+                  marginTop: -8,
+                  left: intersection.getX() * (stoneWidth + 1),
+                  top: intersection.getY() * (stoneWidth + 1),
+                  ...intersection.style,
+                }}
+                onTouchStart={() => {
+                  if (isGameOver()) {
+                    toggleDeadAt(intersection.getX(), intersection.getY());
+                  } else {
+                    handleOnTouch(intersection.getX(), intersection.getY());
+                  }
+                }}
+              ></View>
+            );
+          })}
         </View>
       </View>
     </>

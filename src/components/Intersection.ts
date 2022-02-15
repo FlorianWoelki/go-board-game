@@ -1,9 +1,13 @@
+import { ViewStyle } from 'react-native';
+
 type IntersectionValue = 'empty' | 'black' | 'white';
 
 export class Intersection {
   private x: number;
   private y: number;
   private value: IntersectionValue;
+
+  style: ViewStyle = {};
 
   constructor(x: number, y: number, value: IntersectionValue = 'empty') {
     this.x = x;

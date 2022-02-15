@@ -1,28 +1,9 @@
 import React, { useMemo } from 'react';
 import { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, View, ViewStyle, Text } from 'react-native';
+import { MoveInfo, PlayerColor, Point } from '../types/BoardMove';
 import { Intersection } from './Intersection';
 import { LineRenderer } from './LineRenderer';
-
-type PlayerColor = 'white' | 'black';
-
-interface Move {
-  x: number;
-  y: number;
-  color: PlayerColor;
-}
-
-interface MoveInfo {
-  x: number | null;
-  y: number | null;
-  color: PlayerColor;
-  pass: boolean;
-  points: Intersection[];
-  blackStonesCaptured: number;
-  whiteStonesCaptured: number;
-  capturedPositions: Move[];
-  koPoint: null | Omit<Move, 'color'>;
-}
 
 interface BoardProps {
   size?: number;
@@ -41,10 +22,10 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     black: number;
     white: number;
   }>({ black: 0, white: 0 });
-  const [deadPoints, setDeadPoints] = useState<Omit<Move, 'color'>[]>([]);
+  const [deadPoints, setDeadPoints] = useState<Point[]>([]);
   const [territoryPoints, setTerritoryPoints] = useState<{
-    black: Omit<Move, 'color'>[];
-    white: Omit<Move, 'color'>[];
+    black: Point[];
+    white: Point[];
   }>({ black: [], white: [] });
   const [shouldRenderTerritory, setRenderTerritory] = useState<boolean>(false);
 
@@ -428,10 +409,6 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     console.log(currentPlayer, 'played at', cm.x, cm.y);
     setRenderTerritory((old) => !old);
   }, [moves]);
-
-  useEffect(() => {
-    console.log(123);
-  }, []);
 
   const renderTerritory = () => {
     setIntersections((previous) => {

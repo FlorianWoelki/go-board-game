@@ -12,7 +12,6 @@ interface BoardProps {
 
 export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
   const margin = 18;
-  const boardSizeOffset = { 9: 0, 13: 1, 19: 2 };
 
   const [stoneWidth, setStoneWidth] = useState<number>(0);
 
@@ -34,19 +33,14 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     stateFor,
     wouldBeSuicide,
     hasCapturesFor,
-    isKoFrom,
     groupAt,
     neighborsFor,
     clearCapturesFor,
   } = useGameLogic(size, boardCaptures, intersections);
 
   useEffect(() => {
-    setStoneWidth(
-      Math.round(
-        Dimensions.get('window').width / size -
-          boardSizeOffset[size as keyof typeof boardSizeOffset],
-      ),
-    );
+    const width = Dimensions.get('window').width;
+    setStoneWidth(Math.round((width - margin * 2 - margin) / (size - 1)));
   }, []);
 
   const createIntersection = (x: number, y: number): void => {
@@ -408,7 +402,7 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
           justifyContent: 'center',
         }}
       >
-        <Text style={{ marginRight: 16 }}>Black: {score.black}</Text>
+        <Text style={{ marginRight: margin }}>Black: {score.black}</Text>
         <Text>White: {score.white}</Text>
       </View>
       <View
@@ -425,8 +419,8 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
         <View
           style={{
             position: 'absolute',
-            top: 18 - size / 2,
-            left: 18 - size / 2,
+            top: margin - size / 2,
+            left: margin - size / 2,
           }}
         >
           {intersections.flat().map((intersection, i) => {

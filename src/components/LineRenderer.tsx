@@ -47,6 +47,7 @@ export const LineRenderer: React.FC<LineRendererProps> = ({
       <View
         style={{
           ...styles.horizontalLines,
+          margin: dim.margin,
           width: dim.stoneWidth * (dim.size - 1) + dim.size * 1,
           height: dim.stoneWidth * (dim.size - 1) + dim.size * 1,
         }}
@@ -58,6 +59,7 @@ export const LineRenderer: React.FC<LineRendererProps> = ({
       <View
         style={{
           ...styles.verticalLines,
+          margin: dim.margin,
           width: dim.stoneWidth * (dim.size - 1) + dim.size * 1,
           height: dim.stoneWidth * (dim.size - 1) + dim.size * 1,
         }}
@@ -75,13 +77,11 @@ export const LineRenderer: React.FC<LineRendererProps> = ({
 
 const styles = StyleSheet.create({
   horizontalLines: {
-    margin: 18,
     position: 'absolute',
     top: 0,
     left: 0,
   },
   verticalLines: {
-    margin: 18,
     flexDirection: 'row',
   },
   lineHorizontal: {

@@ -40,7 +40,7 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
 
   useEffect(() => {
     const width = Dimensions.get('window').width;
-    setStoneWidth(Math.round((width - margin * 2 - margin) / (size - 1)));
+    setStoneWidth((width - margin * 2) / (size - 1));
   }, []);
 
   const createIntersection = (x: number, y: number): void => {
@@ -179,6 +179,8 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
             height: 28 - 1,
             borderRadius: 28 / 2,
             backgroundColor: color,
+            left: intersection.getX() * stoneWidth - 28 / 4,
+            top: intersection.getY() * stoneWidth - 28 / 4,
             borderColor: color,
           } as ViewStyle;
         }
@@ -428,13 +430,11 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
               <View
                 key={i}
                 style={{
-                  height: 28,
-                  width: 28,
+                  height: stoneWidth / 4,
+                  width: stoneWidth / 4,
                   position: 'absolute',
-                  marginLeft: -8,
-                  marginTop: -8,
-                  left: intersection.getX() * (stoneWidth + 1),
-                  top: intersection.getY() * (stoneWidth + 1),
+                  left: intersection.getX() * stoneWidth,
+                  top: intersection.getY() * stoneWidth,
                   ...intersection.style,
                 }}
                 onTouchStart={() => {

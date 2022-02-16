@@ -20,26 +20,23 @@ export const useHoshiPoints = (
         const hoshiStyle: ViewStyle = {};
         const hoshiOffset = size > 9 ? 3 : 2;
         if (hoshiY === 0) {
-          hoshiStyle.top = margin + hoshiOffset * (stoneWidth + 1) - 2;
+          hoshiStyle.top = margin + hoshiOffset * stoneWidth - 2;
         }
         if (hoshiY === 1) {
-          hoshiStyle.top = margin + ((size + 1) / 2 - 1) * (stoneWidth + 1) - 2;
+          hoshiStyle.top = margin + ((size + 1) / 2 - 1) * stoneWidth - 2;
         }
         if (hoshiY === 2) {
-          hoshiStyle.top =
-            margin + (size - hoshiOffset - 1) * (stoneWidth + 1) - 2;
+          hoshiStyle.top = margin + (size - hoshiOffset - 1) * stoneWidth - 2;
         }
 
         if (hoshiX === 0) {
-          hoshiStyle.left = margin + hoshiOffset * (stoneWidth + 1) - 2;
+          hoshiStyle.left = margin + hoshiOffset * stoneWidth - 2;
         }
         if (hoshiX === 1) {
-          hoshiStyle.left =
-            margin + ((size + 1) / 2 - 1) * (stoneWidth + 1) - 2;
+          hoshiStyle.left = margin + ((size + 1) / 2 - 1) * stoneWidth - 2;
         }
         if (hoshiX === 2) {
-          hoshiStyle.left =
-            margin + (size - hoshiOffset - 1) * (stoneWidth + 1) - 2;
+          hoshiStyle.left = margin + (size - hoshiOffset - 1) * stoneWidth - 2;
         }
 
         const hoshiPoint = { style: { ...defaultStyle, ...hoshiStyle } };

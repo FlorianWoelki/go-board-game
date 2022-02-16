@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import { BoardDimension } from '../types/BoardDimension';
 import { ViewStyleObject } from '../types/ViewStyleObject';
 import { useHoshiPoints } from './hooks/useHoshiPoints';
@@ -32,7 +32,9 @@ export const LineRenderer: React.FC<LineRendererProps> = ({
       setHorizontalLines((old) => [...old, horizontalLine]);
 
       const verticalLine = {
-        style: { ...styles.lineVertical, marginRight: dim.stoneWidth },
+        style: {
+          ...styles.lineVertical,
+        },
       };
       setVerticalLines((old) => [...old, verticalLine]);
 
@@ -48,24 +50,37 @@ export const LineRenderer: React.FC<LineRendererProps> = ({
         style={{
           ...styles.horizontalLines,
           margin: dim.margin,
-          width: dim.stoneWidth * (dim.size - 1) + dim.size * 1,
-          height: dim.stoneWidth * (dim.size - 1) + dim.size * 1,
+          width: Dimensions.get('window').width - dim.margin * 2,
         }}
       >
         {horizontalLines.map((hl, i) => (
-          <View key={i} style={hl.style}></View>
+          <View
+            key={i}
+            style={{
+              ...hl.style,
+              position: 'absolute',
+              marginTop: dim.stoneWidth * i,
+            }}
+          ></View>
         ))}
       </View>
       <View
         style={{
           ...styles.verticalLines,
           margin: dim.margin,
-          width: dim.stoneWidth * (dim.size - 1) + dim.size * 1,
-          height: dim.stoneWidth * (dim.size - 1) + dim.size * 1,
+          position: 'absolute',
+          height: Dimensions.get('window').width - dim.margin * 2 + 1,
         }}
       >
         {verticalLines.map((vl, i) => (
-          <View key={i} style={vl.style}></View>
+          <View
+            key={i}
+            style={{
+              ...vl.style,
+              position: 'absolute',
+              marginLeft: dim.stoneWidth * i,
+            }}
+          ></View>
         ))}
       </View>
       {hoshiPoints.map((hp, i) => (
@@ -76,14 +91,8 @@ export const LineRenderer: React.FC<LineRendererProps> = ({
 };
 
 const styles = StyleSheet.create({
-  horizontalLines: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-  },
-  verticalLines: {
-    flexDirection: 'row',
-  },
+  horizontalLines: {},
+  verticalLines: {},
   lineHorizontal: {
     backgroundColor: 'rgb(135, 113, 63)',
     height: 1,

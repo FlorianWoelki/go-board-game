@@ -175,12 +175,18 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
           }
 
           i.style = {
-            width: 28 - 1,
-            height: 28 - 1,
-            borderRadius: 28 / 2,
+            width: stoneWidth / 1.5,
+            height: stoneWidth / 1.5,
+            borderRadius: 99999,
             backgroundColor: color,
-            left: intersection.getX() * stoneWidth - 28 / 4,
-            top: intersection.getY() * stoneWidth - 28 / 4,
+            left:
+              intersection.getX() * stoneWidth +
+              size / 2 -
+              stoneWidth / 1.5 / 2,
+            top:
+              intersection.getY() * stoneWidth +
+              size / 2 -
+              stoneWidth / 1.5 / 2,
             borderColor: color,
           } as ViewStyle;
         }
@@ -229,10 +235,8 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
         const intersection = updated[tp.y][tp.x];
         if (intersection.getValue() === 'empty') {
           intersection.style = {
-            width: 28 / 4,
-            height: 28 / 4,
-            marginLeft: 1,
-            marginTop: 1,
+            width: stoneWidth / 4,
+            height: stoneWidth / 4,
             backgroundColor: 'black',
           };
         }
@@ -246,10 +250,8 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
         const intersection = updated[tp.y][tp.x];
         if (intersection.getValue() === 'empty') {
           intersection.style = {
-            width: 28 / 4,
-            height: 28 / 4,
-            marginLeft: 1,
-            marginTop: 1,
+            width: stoneWidth / 4,
+            height: stoneWidth / 4,
             backgroundColor: 'white',
           };
         }
@@ -441,7 +443,6 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
                     intersection.getY() * stoneWidth +
                     size / 2 -
                     stoneWidth / 4 / 2,
-                  backgroundColor: 'green',
                   ...intersection.style,
                 }}
                 onTouchStart={() => {

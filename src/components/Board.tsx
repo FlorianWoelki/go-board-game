@@ -12,11 +12,6 @@ interface BoardProps {
 
 export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
   const margin = 18;
-  const intersectionOffset = {
-    19: 7,
-    13: 3,
-    9: 0,
-  };
 
   const [stoneWidth, setStoneWidth] = useState<number>(0);
 
@@ -440,10 +435,12 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
                   position: 'absolute',
                   left:
                     intersection.getX() * stoneWidth +
-                    intersectionOffset[size as keyof typeof intersectionOffset],
+                    size / 2 -
+                    stoneWidth / 4 / 2,
                   top:
                     intersection.getY() * stoneWidth +
-                    intersectionOffset[size as keyof typeof intersectionOffset],
+                    size / 2 -
+                    stoneWidth / 4 / 2,
                   backgroundColor: 'green',
                   ...intersection.style,
                 }}

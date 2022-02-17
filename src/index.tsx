@@ -14,6 +14,7 @@ export default function App() {
       <StatusBar />
 
       <Board size={9} />
+      <Board size={19} />
     </SafeAreaView>
   );
 }

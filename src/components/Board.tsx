@@ -12,6 +12,11 @@ interface BoardProps {
 
 export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
   const margin = 18;
+  const intersectionOffset = {
+    19: 7,
+    13: 3,
+    9: 0,
+  };
 
   const [stoneWidth, setStoneWidth] = useState<number>(0);
 
@@ -433,8 +438,13 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
                   height: stoneWidth / 4,
                   width: stoneWidth / 4,
                   position: 'absolute',
-                  left: intersection.getX() * stoneWidth,
-                  top: intersection.getY() * stoneWidth,
+                  left:
+                    intersection.getX() * stoneWidth +
+                    intersectionOffset[size as keyof typeof intersectionOffset],
+                  top:
+                    intersection.getY() * stoneWidth +
+                    intersectionOffset[size as keyof typeof intersectionOffset],
+                  backgroundColor: 'green',
                   ...intersection.style,
                 }}
                 onTouchStart={() => {

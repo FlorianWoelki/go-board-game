@@ -1,6 +1,13 @@
 import React, { useMemo } from 'react';
 import { useEffect, useState } from 'react';
-import { Dimensions, StyleSheet, View, ViewStyle, Text } from 'react-native';
+import {
+  Dimensions,
+  StyleSheet,
+  View,
+  ViewStyle,
+  Text,
+  Button,
+} from 'react-native';
 import { MoveInfo, PlayerColor, Point } from '../types/BoardMove';
 import { Intersection } from './Intersection';
 import { LineRenderer } from './LineRenderer';
@@ -145,19 +152,8 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
       removeScoringState();
     }
 
-    if (!cm) {
-      setCurrentPlayer('black');
-      setBoardCaptures({ black: 0, white: 0 });
-      return;
-    }
-
-    if (cm.color === 'black') {
-      setCurrentPlayer('white');
-    } else {
-      setCurrentPlayer('black');
-    }
-
-    cm.points.forEach((intersection: Intersection) => {
+    const points = cm ? cm.points : intersections.flat();
+    points.forEach((intersection: Intersection) => {
       setIntersections((previous) => {
         const updated = [...previous];
         const i = updated[intersection.getY()][intersection.getX()];
@@ -194,22 +190,34 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
       });
     });
 
-    if (cm.koPoint) {
-      const intersection = intersections[cm.koPoint.y][cm.koPoint.x];
-      cm.koPoint = { x: intersection.getX(), y: intersection.getY() };
+    if (!cm) {
+      setCurrentPlayer('black');
+      setBoardCaptures({ black: 0, white: 0 });
     } else {
-      cm.koPoint = null;
+      if (cm.color === 'black') {
+        setCurrentPlayer('white');
+      } else {
+        setCurrentPlayer('black');
+      }
+
+      if (cm.koPoint) {
+        const intersection = intersections[cm.koPoint.y][cm.koPoint.x];
+        cm.koPoint = { x: intersection.getX(), y: intersection.getY() };
+      } else {
+        cm.koPoint = null;
+      }
+
+      //if (isGameOver()) {
+      //}
+
+      setBoardCaptures({
+        black: cm.blackStonesCaptured,
+        white: cm.whiteStonesCaptured,
+      });
+
+      console.log(currentPlayer, 'played at', cm.x, cm.y);
     }
 
-    //if (isGameOver()) {
-    //}
-
-    setBoardCaptures({
-      black: cm.blackStonesCaptured,
-      white: cm.whiteStonesCaptured,
-    });
-
-    console.log(currentPlayer, 'played at', cm.x, cm.y);
     setRenderTerritory((old) => !old);
   }, [moves]);
 
@@ -397,6 +405,23 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
     };
   }, [territoryPoints, boardCaptures, deadPoints]);
 
+  const undo = () => {
+    setMoves((previous) => {
+      const newMoves = [...previous];
+      const boardMove = newMoves.pop();
+      setIntersections((previous) => {
+        if (!boardMove?.x || !boardMove?.y) {
+          return previous;
+        }
+
+        const updated = [...previous];
+        updated[boardMove.y][boardMove.x].setEmpty();
+        return updated;
+      });
+      return newMoves;
+    });
+  };
+
   return (
     <>
       <View
@@ -457,6 +482,12 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
           })}
         </View>
       </View>
+
+      <Button
+        title="Undo"
+        disabled={moves.length === 0}
+        onPress={undo}
+      ></Button>
     </>
   );
 };

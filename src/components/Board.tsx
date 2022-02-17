@@ -1,17 +1,11 @@
 import React, { useMemo } from 'react';
 import { useEffect, useState } from 'react';
-import {
-  Dimensions,
-  StyleSheet,
-  View,
-  ViewStyle,
-  Text,
-  Button,
-} from 'react-native';
+import { Dimensions, StyleSheet, View, ViewStyle, Text } from 'react-native';
 import { MoveInfo, PlayerColor, Point } from '../types/BoardMove';
 import { Intersection } from './Intersection';
 import { LineRenderer } from './LineRenderer';
 import { useGameLogic } from './hooks/useGameLogic';
+import { Button } from './Button';
 
 interface BoardProps {
   size?: number;
@@ -483,11 +477,13 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
         </View>
       </View>
 
-      <Button
-        title="Undo"
-        disabled={moves.length === 0}
-        onPress={undo}
-      ></Button>
+      <View style={{ display: 'flex', margin }}>
+        <Button
+          title="Undo"
+          onPress={undo}
+          disabled={moves.length === 0}
+        ></Button>
+      </View>
     </>
   );
 };

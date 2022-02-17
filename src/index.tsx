@@ -5,12 +5,8 @@ import { SafeAreaView } from 'react-native';
 import { Board } from './components/Board';
 
 export default function App() {
-  const backgroundStyle = {
-    backgroundColor: 'rgb(226, 188, 106)',
-  };
-
   return (
-    <SafeAreaView style={backgroundStyle}>
+    <SafeAreaView style={{ backgroundColor: '#dfbd6d' }}>
       <StatusBar />
 
       <Board size={9} />

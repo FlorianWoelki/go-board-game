@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, View, ViewStyle, Text } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { MoveInfo, PlayerColor, Point } from '../types/BoardMove';
 import { Intersection } from './Intersection';
 import { LineRenderer } from './LineRenderer';
@@ -168,7 +169,11 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
             width: stoneWidth / 1.5,
             height: stoneWidth / 1.5,
             borderRadius: 99999,
-            backgroundColor: color,
+            backgroundColor: i.isBlack() ? '#333' : '#e8e8e8',
+            shadowColor: 'rgb(0, 0, 0)',
+            shadowOffset: { width: 2, height: 2 },
+            shadowRadius: 1,
+            shadowOpacity: 0.5,
             left:
               intersection.getX() * stoneWidth +
               size / 2 -
@@ -471,7 +476,24 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
                     handleOnTouch(intersection.getX(), intersection.getY());
                   }
                 }}
-              ></View>
+              >
+                {!intersection.isEmpty() && (
+                  <LinearGradient
+                    colors={
+                      intersection.isWhite()
+                        ? ['#fff', 'transparent']
+                        : ['#505050', 'transparent']
+                    }
+                    start={{ x: 0.2, y: 0.1 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{
+                      height: stoneWidth / 1.5,
+                      width: stoneWidth / 1.5,
+                      borderRadius: 15,
+                    }}
+                  ></LinearGradient>
+                )}
+              </View>
             );
           })}
         </View>
@@ -491,6 +513,6 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
 const styles = StyleSheet.create({
   board: {
     position: 'relative',
-    backgroundColor: 'rgb(226, 188, 106)',
+    backgroundColor: '#dfbd6d',
   },
 });

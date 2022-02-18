@@ -239,8 +239,8 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
         const intersection = updated[tp.y][tp.x];
         if (intersection.getValue() === 'empty') {
           intersection.style = {
-            width: pointSize,
-            height: pointSize,
+            width: stoneWidth / 4,
+            height: stoneWidth / 4,
             backgroundColor: 'black',
           };
         }
@@ -254,8 +254,8 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
         const intersection = updated[tp.y][tp.x];
         if (intersection.getValue() === 'empty') {
           intersection.style = {
-            width: pointSize,
-            height: pointSize,
+            width: stoneWidth / 4,
+            height: stoneWidth / 4,
             backgroundColor: 'white',
           };
         }
@@ -449,6 +449,35 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
           }}
         >
           {intersections.flat().map((intersection, i) => {
+            if (intersection.isEmpty()) {
+              return (
+                <View
+                  key={i}
+                  style={{
+                    height: pointSize,
+                    width: pointSize,
+                    position: 'absolute',
+                    left:
+                      intersection.getX() * stoneWidth +
+                      size / 2 -
+                      stoneWidth / 4 / 2,
+                    top:
+                      intersection.getY() * stoneWidth +
+                      size / 2 -
+                      stoneWidth / 4 / 2,
+                    ...intersection.style,
+                  }}
+                  onTouchStart={() => {
+                    if (isGameOver()) {
+                      toggleDeadAt(intersection.getX(), intersection.getY());
+                    } else {
+                      handleOnTouch(intersection.getX(), intersection.getY());
+                    }
+                  }}
+                ></View>
+              );
+            }
+
             return (
               <View
                 key={i}
@@ -457,13 +486,9 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
                   width: pointSize,
                   position: 'absolute',
                   left:
-                    intersection.getX() * stoneWidth +
-                    size / 2 -
-                    (stoneWidth - 1) / 2,
+                    intersection.getX() * stoneWidth + size / 2 - pointSize / 2,
                   top:
-                    intersection.getY() * stoneWidth +
-                    size / 2 -
-                    (stoneWidth - 1) / 2,
+                    intersection.getY() * stoneWidth + size / 2 - pointSize / 2,
                   ...intersection.style,
                 }}
                 onTouchStart={() => {

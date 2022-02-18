@@ -447,30 +447,48 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
           {intersections.flat().map((intersection, i) => {
             if (intersection.isEmpty()) {
               return (
-                <View
-                  key={i}
-                  style={{
-                    height: pointSize,
-                    width: pointSize,
-                    position: 'absolute',
-                    left:
-                      intersection.getX() * stoneWidth +
-                      size / 2 -
-                      (stoneWidth - 1) / 2,
-                    top:
-                      intersection.getY() * stoneWidth +
-                      size / 2 -
-                      (stoneWidth - 1) / 2,
-                    ...intersection.style,
-                  }}
-                  onTouchStart={() => {
-                    if (isGameOver()) {
-                      toggleDeadAt(intersection.getX(), intersection.getY());
-                    } else {
-                      handleOnTouch(intersection.getX(), intersection.getY());
-                    }
-                  }}
-                ></View>
+                <React.Fragment key={i}>
+                  <View
+                    style={{
+                      width: pointSize,
+                      height: pointSize,
+                      position: 'absolute',
+                      zIndex: 10,
+                      left:
+                        intersection.getX() * stoneWidth +
+                        size / 2 -
+                        (stoneWidth - 1) / 2,
+                      top:
+                        intersection.getY() * stoneWidth +
+                        size / 2 -
+                        (stoneWidth - 1) / 2,
+                    }}
+                    onTouchStart={() => {
+                      if (isGameOver()) {
+                        toggleDeadAt(intersection.getX(), intersection.getY());
+                      } else {
+                        handleOnTouch(intersection.getX(), intersection.getY());
+                      }
+                    }}
+                  ></View>
+                  <View
+                    key={i}
+                    style={{
+                      height: pointSize,
+                      width: pointSize,
+                      position: 'absolute',
+                      left:
+                        intersection.getX() * stoneWidth +
+                        size / 2 -
+                        stoneWidth / 4 / 2,
+                      top:
+                        intersection.getY() * stoneWidth +
+                        size / 2 -
+                        stoneWidth / 4 / 2,
+                      ...intersection.style,
+                    }}
+                  ></View>
+                </React.Fragment>
               );
             }
 

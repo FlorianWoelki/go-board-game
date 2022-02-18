@@ -456,11 +456,11 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
                     left:
                       intersection.getX() * stoneWidth +
                       size / 2 -
-                      stoneWidth / 4 / 2,
+                      (stoneWidth - 1) / 2,
                     top:
                       intersection.getY() * stoneWidth +
                       size / 2 -
-                      stoneWidth / 4 / 2,
+                      (stoneWidth - 1) / 2,
                     ...intersection.style,
                   }}
                   onTouchStart={() => {

@@ -16,6 +16,7 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
   const margin = 18;
 
   const [stoneWidth, setStoneWidth] = useState<number>(0);
+  const [pointSize, setPointSize] = useState<number>(0);
 
   const [intersections, setIntersections] = useState<Intersection[][]>([]);
   const [moves, setMoves] = useState<MoveInfo[]>([]);
@@ -42,7 +43,9 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
 
   useEffect(() => {
     const width = Dimensions.get('window').width;
-    setStoneWidth((width - margin * 2) / (size - 1));
+    const stoneWidth = (width - margin * 2) / (size - 1);
+    setStoneWidth(stoneWidth);
+    setPointSize(stoneWidth - 1);
   }, []);
 
   const createIntersection = (x: number, y: number): void => {
@@ -166,22 +169,16 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
           }
 
           i.style = {
-            width: stoneWidth / 1.5,
-            height: stoneWidth / 1.5,
+            width: pointSize,
+            height: pointSize,
             borderRadius: 99999,
             backgroundColor: i.isBlack() ? '#333' : '#e8e8e8',
             shadowColor: 'rgb(0, 0, 0)',
             shadowOffset: { width: 2, height: 2 },
             shadowRadius: 1,
             shadowOpacity: 0.5,
-            left:
-              intersection.getX() * stoneWidth +
-              size / 2 -
-              stoneWidth / 1.5 / 2,
-            top:
-              intersection.getY() * stoneWidth +
-              size / 2 -
-              stoneWidth / 1.5 / 2,
+            left: intersection.getX() * stoneWidth + size / 2 - pointSize / 2,
+            top: intersection.getY() * stoneWidth + size / 2 - pointSize / 2,
             borderColor: color,
           } as ViewStyle;
         }
@@ -242,8 +239,8 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
         const intersection = updated[tp.y][tp.x];
         if (intersection.getValue() === 'empty') {
           intersection.style = {
-            width: stoneWidth / 2,
-            height: stoneWidth / 2,
+            width: pointSize,
+            height: pointSize,
             backgroundColor: 'black',
           };
         }
@@ -257,8 +254,8 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
         const intersection = updated[tp.y][tp.x];
         if (intersection.getValue() === 'empty') {
           intersection.style = {
-            width: stoneWidth / 2,
-            height: stoneWidth / 2,
+            width: pointSize,
+            height: pointSize,
             backgroundColor: 'white',
           };
         }
@@ -456,17 +453,17 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
               <View
                 key={i}
                 style={{
-                  height: stoneWidth / 2,
-                  width: stoneWidth / 2,
+                  height: pointSize,
+                  width: pointSize,
                   position: 'absolute',
                   left:
                     intersection.getX() * stoneWidth +
                     size / 2 -
-                    stoneWidth / 2 / 2,
+                    (stoneWidth - 1) / 2,
                   top:
                     intersection.getY() * stoneWidth +
                     size / 2 -
-                    stoneWidth / 2 / 2,
+                    (stoneWidth - 1) / 2,
                   ...intersection.style,
                 }}
                 onTouchStart={() => {
@@ -479,9 +476,9 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
               >
                 {!intersection.isEmpty() && (
                   <RadialGradient
-                    width={stoneWidth / 1.5}
-                    height={stoneWidth / 1.5}
-                    borderRadius={stoneWidth / 1.5}
+                    width={pointSize}
+                    height={pointSize}
+                    borderRadius={pointSize}
                     colors={
                       intersection.isWhite()
                         ? ['#fff', '#e8e8e8']

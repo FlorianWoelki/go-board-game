@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 import { useEffect, useState } from 'react';
 import { Dimensions, StyleSheet, View, ViewStyle, Text } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MoveInfo, PlayerColor, Point } from '../types/BoardMove';
 import { Intersection } from './Intersection';
 import { LineRenderer } from './LineRenderer';
 import { useGameLogic } from './hooks/useGameLogic';
 import { Button } from './Button';
+import { RadialGradient } from './util/RadialGradient';
 
 interface BoardProps {
   size?: number;
@@ -478,20 +478,19 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
                 }}
               >
                 {!intersection.isEmpty() && (
-                  <LinearGradient
+                  <RadialGradient
+                    width={stoneWidth / 1.5}
+                    height={stoneWidth / 1.5}
+                    borderRadius={stoneWidth / 1.5}
                     colors={
                       intersection.isWhite()
-                        ? ['#fff', 'transparent']
+                        ? ['#fff', '#e8e8e8']
                         : ['#505050', 'transparent']
                     }
-                    start={{ x: 0.2, y: 0.1 }}
-                    end={{ x: 1, y: 1 }}
-                    style={{
-                      height: stoneWidth / 1.5,
-                      width: stoneWidth / 1.5,
-                      borderRadius: 15,
-                    }}
-                  ></LinearGradient>
+                    intervals={
+                      intersection.isWhite() ? [0.2, 0.45] : [0.2, 0.9]
+                    }
+                  ></RadialGradient>
                 )}
               </View>
             );

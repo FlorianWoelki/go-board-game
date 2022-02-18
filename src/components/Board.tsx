@@ -173,10 +173,6 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
             height: pointSize,
             borderRadius: 99999,
             backgroundColor: i.isBlack() ? '#333' : '#e8e8e8',
-            shadowColor: 'rgb(0, 0, 0)',
-            shadowOffset: { width: 2, height: 2 },
-            shadowRadius: 1,
-            shadowOpacity: 0.5,
             left: intersection.getX() * stoneWidth + size / 2 - pointSize / 2,
             top: intersection.getY() * stoneWidth + size / 2 - pointSize / 2,
             borderColor: color,
@@ -489,6 +485,10 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
                     intersection.getX() * stoneWidth + size / 2 - pointSize / 2,
                   top:
                     intersection.getY() * stoneWidth + size / 2 - pointSize / 2,
+                  shadowColor: 'rgb(0, 0, 0)',
+                  shadowOffset: { width: 2, height: 2 },
+                  shadowRadius: 1,
+                  shadowOpacity: 0.5,
                   ...intersection.style,
                 }}
                 onTouchStart={() => {
@@ -499,19 +499,17 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
                   }
                 }}
               >
-                {!intersection.isEmpty() && (
-                  <RadialGradient
-                    width={pointSize}
-                    height={pointSize}
-                    borderRadius={pointSize}
-                    colors={
-                      intersection.isWhite()
-                        ? ['#fff', '#e8e8e8']
-                        : ['#505050', 'transparent']
-                    }
-                    intervals={intersection.isWhite() ? [0.2, 0.45] : [0.2, 1]}
-                  ></RadialGradient>
-                )}
+                <RadialGradient
+                  width={pointSize}
+                  height={pointSize}
+                  borderRadius={pointSize}
+                  colors={
+                    intersection.isWhite()
+                      ? ['#fff', '#e8e8e8']
+                      : ['#505050', 'transparent']
+                  }
+                  intervals={intersection.isWhite() ? [0.2, 0.45] : [0.2, 1]}
+                ></RadialGradient>
               </View>
             );
           })}

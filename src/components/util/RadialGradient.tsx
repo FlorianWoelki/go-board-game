@@ -1,16 +1,17 @@
 import React from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View, ViewStyle } from 'react-native';
 
 const hairlineWidth = 1;
 const doubleHairlineWidth = hairlineWidth * 2;
 
-const getHypotenuse = (a: number, b: number) => Math.sqrt(a ** 2 + b ** 2);
+const getHypotenuse = (a: number, b: number): number =>
+  Math.sqrt(a ** 2 + b ** 2);
 
 const normalizeIntervals = (
-  intervals: any,
-  colors: any,
-  gradientArrayLength: any,
-) => {
+  intervals: number[],
+  colors: string[],
+  gradientArrayLength: number,
+): number[] => {
   if (intervals) {
     if (intervals.length !== colors.length) {
       throw new Error();
@@ -26,15 +27,23 @@ const normalizeIntervals = (
   return intervals.map((num: number) => num * (gradientArrayLength - 1));
 };
 
-export const RadialGradient: React.FC = ({
+interface RadialGradientProps {
+  width: number;
+  height: number;
+  intervals: number[];
+  colors: string[];
+  borderRadius: number;
+  style?: ViewStyle;
+}
+
+export const RadialGradient: React.FC<RadialGradientProps> = ({
   width,
   height,
   style,
   intervals,
   colors,
   borderRadius,
-  children,
-}: any): JSX.Element => {
+}): JSX.Element => {
   const diagonal = getHypotenuse(height, width);
   const gradientArrayLength = Math.ceil(diagonal / 2 / hairlineWidth);
   const normalIntervals = normalizeIntervals(

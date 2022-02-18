@@ -487,9 +487,7 @@ export const Board: React.FC<BoardProps> = ({ size = 9 }): JSX.Element => {
                         ? ['#fff', '#e8e8e8']
                         : ['#505050', 'transparent']
                     }
-                    intervals={
-                      intersection.isWhite() ? [0.2, 0.45] : [0.2, 0.9]
-                    }
+                    intervals={intersection.isWhite() ? [0.2, 0.45] : [0.2, 1]}
                   ></RadialGradient>
                 )}
               </View>
